@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('generateBtn').addEventListener('click', generateClozeTest);
             document.getElementById('prevBtn').addEventListener('click', showPreviousArticle);
             document.getElementById('nextBtn').addEventListener('click', showNextArticle);
+            document.getElementById('clearErrorStatsBtn').addEventListener('click', clearErrorStats);
         })
         .catch(error => {
             console.error('加载配置失败，使用默认配置:', error);
@@ -316,7 +317,8 @@ function displayArticleWithCloze(article, parts, clozePositions) {
             html += `
                 <div class="input-group">
                     <input type="text" id="${inputId}" class="cloze-input" placeholder="请输入..." 
-                           data-original="${originalText}" data-sentence="${sentence}">
+                           data-original="${originalText}" data-sentence="${sentence}" 
+                           autocomplete="off" autocorrect="off" spellcheck="false">
                     <button type="button" id="${btnId}" class="show-answer-btn" 
                             data-input="${inputId}" data-original="${originalText}" data-sentence="${sentence}" 
                             data-feedback="${feedbackId}">显</button>
@@ -359,7 +361,7 @@ function showAnswer(event) {
     // 标记为错误
     input.classList.add('incorrect');
     input.classList.remove('correct');
-    feedbackElement.textContent = `❌ ${originalText}`;
+    feedbackElement.textContent = `❌`;
     feedbackElement.className = 'answer-feedback incorrect';
     
     // 隐藏"显"按钮
@@ -377,6 +379,9 @@ function showAnswer(event) {
     
     // 更新错误统计显示
     displayErrorStats();
+    
+    // 锁定输入框
+    input.disabled = true;
     
     // 保存进度
     saveProgress();
@@ -421,6 +426,9 @@ function checkAnswer(event) {
             }
         }
         
+        // 锁定输入框
+        input.disabled = true;
+        
         saveProgress();
         updateStats();
     } else {
@@ -428,6 +436,13 @@ function checkAnswer(event) {
         input.classList.add('incorrect');
         input.classList.remove('correct');
         feedbackElement.textContent = `❌ ${originalText}`;
+        feedbackElement.className = 'answer-feedback incorrect';
+        
+        // 隐藏"显"按钮
+        const showBtn = document.getElementById(input.id.replace('cloze', 'show'));
+        if (showBtn) {
+            showBtn.style.display = 'none';
+        }
         
         // 添加到易错栏
         if (!errorSentences.has(sentence)) {
@@ -441,6 +456,9 @@ function checkAnswer(event) {
         
         // 更新错误统计显示
         displayErrorStats();
+        
+        // 锁定输入框
+        input.disabled = true;
         
         saveProgress();
         updateStats();
@@ -647,6 +665,28 @@ function displayErrorStats() {
         statItem.textContent = `${sentence}: ${count}次`;
         statsDiv.appendChild(statItem);
     });
+}
+
+// 清除错误统计
+function clearErrorStats() {
+    // 清空错误次数统计
+    errorCounts.clear();
+    
+    // 清空易错短句
+    errorSentences.clear();
+    
+    // 清空易错栏显示
+    const errorSentencesList = document.getElementById('errorSentencesList');
+    errorSentencesList.innerHTML = '<div style="padding: 10px; color: #666; text-align: center;">暂无易错短句</div>';
+    
+    // 清空错误统计显示
+    displayErrorStats();
+    
+    // 保存进度
+    saveProgress();
+    
+    // 更新统计显示
+    updateStats();
 }
 
 // 更新统计信息
