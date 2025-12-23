@@ -80,6 +80,16 @@ function toggleSection(sectionId) {
     }
 }
 
+// 折叠列表切换函数
+function toggleCollapse(headerElement) {
+    const container = headerElement.parentElement;
+    const content = container.querySelector('.collapse-content');
+    const arrow = container.querySelector('.collapse-arrow');
+    
+    content.classList.toggle('expanded');
+    arrow.classList.toggle('expanded');
+}
+
 // 加载文本文件
 function loadTextFile() {
     const questionFile = config?.questionFile || '背诵.txt';
@@ -361,7 +371,7 @@ function checkAnswer(event) {
         // 错误
         input.classList.add('incorrect');
         input.classList.remove('correct');
-        feedbackElement.textContent = `✗ 正确答案: ${originalText}`;
+        feedbackElement.textContent = `❌ 正确答案: ${originalText}`;
         
         // 添加到易错栏
         if (!errorSentences.has(sentence)) {
@@ -381,28 +391,127 @@ function checkAnswer(event) {
     }
 }
 
-// 添加到掌握栏
-function addToMasteredSentences(sentence) {
-    const masteredDiv = document.getElementById('masteredSentencesList');
-    const sentenceItem = document.createElement('div');
-    sentenceItem.className = 'mastered-item';
+// 按文章分组掌握的句子
+function groupSentencesByArticle(sentences) {
+    const grouped = new Map();
     
-    // 创建删除按钮
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'delete-btn';
-    deleteBtn.textContent = '×';
-    deleteBtn.title = '删除该短句';
-    
-    // 添加删除事件
-    deleteBtn.addEventListener('click', function() {
-        deleteMasteredSentence(sentence, sentenceItem);
+    sentences.forEach(sentence => {
+        // 提取文章标识（行号前缀，如"1→"）
+        const articleId = sentence.match(/^(\d+→)/)?.[1] || '其他';
+        
+        if (!grouped.has(articleId)) {
+            grouped.set(articleId, []);
+        }
+        grouped.get(articleId).push(sentence);
     });
     
-    // 设置内容和按钮
-    sentenceItem.textContent = sentence;
-    sentenceItem.appendChild(deleteBtn);
+    return grouped;
+}
+
+// 渲染掌握栏
+function renderMasteredSentences() {
+    const masteredDiv = document.getElementById('masteredSentencesList');
+    masteredDiv.innerHTML = '';
     
-    masteredDiv.appendChild(sentenceItem);
+    if (masteredSentences.size === 0) {
+        masteredDiv.innerHTML = '<div style="padding: 10px; color: #666; text-align: center;">暂无掌握的短句</div>';
+        return;
+    }
+    
+    // 按文章分组
+    const groupedSentences = groupSentencesByArticle(masteredSentences);
+    
+    // 获取当前文章标识
+    const currentArticle = allArticles[currentArticleIndex];
+    const currentArticleId = currentArticle ? currentArticle.lineNumber : '';
+    
+    // 分离当前篇和其他篇
+    const otherArticles = [];
+    let currentArticleGroup = null;
+    
+    groupedSentences.forEach((sentences, articleId) => {
+        if (articleId === currentArticleId) {
+            currentArticleGroup = { articleId, sentences };
+        } else {
+            otherArticles.push({ articleId, sentences });
+        }
+    });
+    
+    // 渲染顺序：当前篇（如果有）→ 其他篇按文章ID排序
+    const renderOrder = [];
+    if (currentArticleGroup) {
+        renderOrder.push(currentArticleGroup);
+    }
+    
+    // 其他篇按文章ID排序
+    otherArticles.sort((a, b) => {
+        // 提取数字部分进行排序
+        const aNum = parseInt(a.articleId.match(/\d+/)?.[0] || '0');
+        const bNum = parseInt(b.articleId.match(/\d+/)?.[0] || '0');
+        return aNum - bNum;
+    });
+    
+    renderOrder.push(...otherArticles);
+    
+    // 渲染所有分组
+    renderOrder.forEach(({ articleId, sentences }) => {
+        const container = document.createElement('div');
+        container.className = `collapse-container`;
+        
+        // 创建头部
+        const isCurrent = articleId === currentArticleId;
+        const header = document.createElement('div');
+        header.className = `collapse-header ${isCurrent ? 'current' : ''}`;
+        header.onclick = () => toggleCollapse(header);
+        
+        const headerText = document.createElement('span');
+        headerText.textContent = `${articleId}篇 (${sentences.length}个短句)`;
+        
+        const arrow = document.createElement('span');
+        arrow.className = 'collapse-arrow';
+        arrow.textContent = '▶';
+        
+        header.appendChild(headerText);
+        header.appendChild(arrow);
+        
+        // 创建内容
+        const content = document.createElement('div');
+        content.className = 'collapse-content';
+        
+        // 添加句子
+        sentences.forEach(sentence => {
+            const sentenceItem = document.createElement('div');
+            sentenceItem.className = 'mastered-item';
+            
+            // 创建删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '×';
+            deleteBtn.title = '删除该短句';
+            
+            // 添加删除事件
+            deleteBtn.addEventListener('click', function() {
+                deleteMasteredSentence(sentence, sentenceItem);
+            });
+            
+            // 设置内容和按钮
+            sentenceItem.textContent = sentence;
+            sentenceItem.appendChild(deleteBtn);
+            
+            content.appendChild(sentenceItem);
+        });
+        
+        // 组装容器
+        container.appendChild(header);
+        container.appendChild(content);
+        masteredDiv.appendChild(container);
+    });
+}
+
+// 添加到掌握栏
+function addToMasteredSentences(sentence) {
+    // 直接重新渲染整个掌握栏
+    renderMasteredSentences();
 }
 
 // 删除已掌握的短句
@@ -410,8 +519,8 @@ function deleteMasteredSentence(sentence, element) {
     // 从集合中删除
     masteredSentences.delete(sentence);
     
-    // 从DOM中删除
-    element.remove();
+    // 重新渲染整个掌握栏
+    renderMasteredSentences();
     
     saveProgress();
     updateStats();
@@ -519,6 +628,8 @@ function showPreviousArticle() {
         currentArticleIndex--;
         generateArticleCloze(currentArticleIndex);
         updateNavigation();
+        // 重新渲染掌握栏，实现当前篇置顶
+        renderMasteredSentences();
     }
 }
 
@@ -528,6 +639,8 @@ function showNextArticle() {
         currentArticleIndex++;
         generateArticleCloze(currentArticleIndex);
         updateNavigation();
+        // 重新渲染掌握栏，实现当前篇置顶
+        renderMasteredSentences();
     }
 }
 
@@ -551,10 +664,8 @@ function loadProgress() {
         errorSentences = new Set(progress.errorSentences || []);
         errorCounts = new Map(Object.entries(progress.errorCounts || {}));
         
-        // 显示已掌握的短句
-        masteredSentences.forEach(sentence => {
-            addToMasteredSentences(sentence);
-        });
+        // 渲染掌握栏
+        renderMasteredSentences();
         
         // 显示易错短句
         errorSentences.forEach(sentence => {

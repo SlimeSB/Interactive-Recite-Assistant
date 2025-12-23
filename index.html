@@ -210,19 +210,78 @@
             margin-bottom: 15px;
         }
         
+        /* 折叠列表容器 */
+        .collapse-container {
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        /* 折叠列表头部 */
+        .collapse-header {
+            padding: 10px;
+            background-color: #f5f5f5;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+            font-weight: bold;
+        }
+        
+        .collapse-header:hover {
+            background-color: #e9e9e9;
+        }
+        
+        /* 折叠列表头部 - 当前篇样式 */
+        .collapse-header.current {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196F3;
+        }
+        
+        /* 折叠箭头 */
+        .collapse-arrow {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        /* 折叠内容 */
+        .collapse-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background-color: white;
+        }
+        
+        /* 展开状态 */
+        .collapse-content.expanded {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        /* 展开时箭头旋转 */
+        .collapse-arrow.expanded {
+            transform: rotate(90deg);
+        }
+        
         /* 掌握栏句子样式 */
         .mastered-item {
-            padding: 8px;
-            margin-bottom: 5px;
-            background-color: #e8f5e8;
-            border-radius: 3px;
+            padding: 8px 15px;
+            margin: 0;
+            border-bottom: 1px solid #f0f0f0;
+            background-color: #ffffff;
             font-size: 14px;
             position: relative;
             transition: all 0.2s ease;
         }
         
+        .mastered-item:last-child {
+            border-bottom: none;
+        }
+        
         .mastered-item:hover {
-            background-color: #d4edda;
+            background-color: #f9f9f9;
         }
         
         /* 易错栏句子样式 */
