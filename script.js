@@ -311,11 +311,15 @@ function displayArticleWithCloze(article, parts, clozePositions) {
             const sentence = article.lineNumber + part + (parts[i + 1] || '');
             const inputId = `cloze-${currentArticleIndex}-${i}`;
             const feedbackId = `feedback-${currentArticleIndex}-${i}`;
+            const btnId = `show-${currentArticleIndex}-${i}`;
             
             html += `
                 <div class="input-group">
                     <input type="text" id="${inputId}" class="cloze-input" placeholder="请输入..." 
                            data-original="${originalText}" data-sentence="${sentence}">
+                    <button type="button" id="${btnId}" class="show-answer-btn" 
+                            data-input="${inputId}" data-original="${originalText}" data-sentence="${sentence}" 
+                            data-feedback="${feedbackId}">显</button>
                     <span id="${feedbackId}" class="answer-feedback"></span>
                 </div>
             `;
@@ -331,6 +335,52 @@ function displayArticleWithCloze(article, parts, clozePositions) {
     document.querySelectorAll('.cloze-input').forEach(input => {
         input.addEventListener('blur', checkAnswer);
     });
+    
+    // 绑定显示答案按钮事件
+    document.querySelectorAll('.show-answer-btn').forEach(btn => {
+        btn.addEventListener('click', showAnswer);
+    });
+}
+
+// 显示答案功能
+function showAnswer(event) {
+    const btn = event.target;
+    const inputId = btn.dataset.input;
+    const originalText = btn.dataset.original;
+    const sentence = btn.dataset.sentence;
+    const feedbackId = btn.dataset.feedback;
+    
+    const input = document.getElementById(inputId);
+    const feedbackElement = document.getElementById(feedbackId);
+    
+    // 显示正确答案
+    input.value = originalText;
+    
+    // 标记为错误
+    input.classList.add('incorrect');
+    input.classList.remove('correct');
+    feedbackElement.textContent = `❌ ${originalText}`;
+    feedbackElement.className = 'answer-feedback incorrect';
+    
+    // 隐藏"显"按钮
+    btn.style.display = 'none';
+    
+    // 添加到易错栏
+    if (!errorSentences.has(sentence)) {
+        errorSentences.add(sentence);
+        addToErrorSentences(sentence);
+    }
+    
+    // 更新错误次数
+    const currentError = errorCounts.get(sentence) || 0;
+    errorCounts.set(sentence, currentError + 1);
+    
+    // 更新错误统计显示
+    displayErrorStats();
+    
+    // 保存进度
+    saveProgress();
+    updateStats();
 }
 
 // 检查答案
@@ -353,6 +403,12 @@ function checkAnswer(event) {
         feedbackElement.textContent = `✓`;
         feedbackElement.className = 'answer-feedback correct';
         
+        // 隐藏"显"按钮
+        const showBtn = document.getElementById(input.id.replace('cloze', 'show'));
+        if (showBtn) {
+            showBtn.style.display = 'none';
+        }
+        
         // 检查是否在易错栏
         if (errorSentences.has(sentence)) {
             // 如果在易错栏，只从易错栏移除
@@ -371,7 +427,7 @@ function checkAnswer(event) {
         // 错误
         input.classList.add('incorrect');
         input.classList.remove('correct');
-        feedbackElement.textContent = `❌ 正确答案: ${originalText}`;
+        feedbackElement.textContent = `❌ ${originalText}`;
         
         // 添加到易错栏
         if (!errorSentences.has(sentence)) {

@@ -4,7 +4,7 @@
         "minCount": 1,
         "smallArticleRatio": 0.3,
         "largeArticleMin": 3,
-        "largeArticleMax": 5,
+        "largeArticleMax": 3,
         "smallArticleThreshold": 10
     },
     "reviewConfig": {

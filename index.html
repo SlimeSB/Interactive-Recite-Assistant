@@ -98,7 +98,7 @@
         .input-group {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
             margin: 0 5px;
         }
         
@@ -109,6 +109,27 @@
             font-size: 16px;
             width: 200px;
             transition: border-color 0.3s;
+        }
+        
+        /* 显示答案按钮 */
+        .show-answer-btn {
+            padding: 8px 12px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            min-width: 40px;
+        }
+        
+        .show-answer-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .show-answer-btn:active {
+            background-color: #b71c1c;
         }
         
         .cloze-input:focus {
