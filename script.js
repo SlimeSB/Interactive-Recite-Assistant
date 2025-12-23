@@ -365,6 +365,12 @@ function displayArticleWithCloze(article, parts, clozePositions) {
             generateFullRecite(currentArticleIndex);
         });
     }
+    
+    // 添加键盘事件监听器
+    addKeyboardEventListeners();
+    
+    // 检查所有输入框是否已完成
+    checkAllInputsCompleted();
 }
 
 // 显示答案功能
@@ -500,6 +506,79 @@ function handleInputCompletion(input) {
     // 保存进度
     saveProgress();
     updateStats();
+    
+    // 检查所有输入框是否已完成
+    checkAllInputsCompleted();
+}
+
+// 添加键盘事件监听器
+function addKeyboardEventListeners() {
+    // 移除之前的事件监听器，避免重复绑定
+    document.removeEventListener('keydown', handleKeyDown);
+    
+    // 添加新的事件监听器
+    document.addEventListener('keydown', handleKeyDown);
+}
+
+// 处理键盘事件
+function handleKeyDown(event) {
+    const key = event.key;
+    const inputs = document.querySelectorAll('.cloze-input');
+    
+    // 1-9数字键切换输入框
+    if (key >= '1' && key <= '9') {
+        const index = parseInt(key) - 1;
+        if (index < inputs.length) {
+            inputs[index].focus();
+        }
+        event.preventDefault();
+    }
+    
+    // Tab键在输入框间循环切换
+    else if (key === 'Tab') {
+        // 检查是否在输入框上
+        if (event.target.classList.contains('cloze-input')) {
+            event.preventDefault();
+            
+            const currentIndex = Array.from(inputs).indexOf(event.target);
+            const nextIndex = (currentIndex + 1) % inputs.length;
+            inputs[nextIndex].focus();
+        }
+    }
+    
+    // 空格键刷新功能（仅当所有输入框都已完成时）
+    else if (key === ' ' && areAllInputsCompleted()) {
+        event.preventDefault();
+        generateClozeTest();
+    }
+}
+
+// 检查所有输入框是否已完成
+function checkAllInputsCompleted() {
+    const inputs = document.querySelectorAll('.cloze-input');
+    const allCompleted = areAllInputsCompleted();
+    
+    // 移除之前的刷新提示
+    const existingHint = document.getElementById('refreshHint');
+    if (existingHint) {
+        existingHint.remove();
+    }
+    
+    // 如果所有输入框都已完成，显示刷新提示
+    if (allCompleted && inputs.length > 0) {
+        const textSection = document.getElementById('textSection');
+        const hint = document.createElement('div');
+        hint.id = 'refreshHint';
+        hint.style.cssText = 'text-align: center; color: #666; font-size: 14px; margin-top: 20px;';
+        hint.textContent = '(按空格键刷新)';
+        textSection.appendChild(hint);
+    }
+}
+
+// 判断所有输入框是否已完成
+function areAllInputsCompleted() {
+    const inputs = document.querySelectorAll('.cloze-input');
+    return Array.from(inputs).every(input => input.disabled);
 }
 
 // 按文章分组掌握的句子
