@@ -1,0 +1,390 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    background-color: #f5f5f5;
+    line-height: 1.6;
+}
+
+.container {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 20px;
+}
+
+.main-content {
+    flex: 3;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar {
+    flex: 1;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+h2 {
+    color: #555;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.progress {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #4CAF50;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+
+.text-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    line-height: 2;
+}
+
+.article-info {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #e8f5e8;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.input-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0 5px;
+}
+
+.cloze-input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    width: 200px;
+    transition: border-color 0.3s;
+}
+
+/* 显示答案按钮 */
+.show-answer-btn {
+    padding: 8px 12px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    min-width: 40px;
+}
+
+.show-answer-btn:hover {
+    background-color: #d32f2f;
+}
+
+.show-answer-btn:active {
+    background-color: #b71c1c;
+}
+
+.cloze-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.cloze-input.correct {
+    border-color: #4CAF50;
+    background-color: #e8f5e8;
+}
+
+.cloze-input.incorrect {
+    border-color: #f44336;
+    background-color: #ffebee;
+}
+
+.answer-feedback {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.answer-feedback.correct {
+    color: #4CAF50;
+}
+
+.answer-feedback.incorrect {
+    color: #f44336;
+}
+
+.controls {
+    text-align: center;
+    margin: 20px 0;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 10px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* 通用section样式 */
+.section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
+
+/* 可折叠section header */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.toggle-icon {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+/* 可折叠内容 */
+.collapsible-content {
+    max-height: 600px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.collapsible-content.collapsed {
+    max-height: 0;
+}
+
+/* 句子列表通用样式 */
+.sentence-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+/* 折叠列表容器 */
+.collapse-container {
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* 折叠列表头部 */
+.collapse-header {
+    padding: 10px;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    font-weight: bold;
+}
+
+.collapse-header:hover {
+    background-color: #e9e9e9;
+}
+
+/* 折叠列表头部 - 当前篇样式 */
+.collapse-header.current {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196F3;
+}
+
+/* 折叠箭头 */
+.collapse-arrow {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+/* 折叠内容 */
+.collapse-content {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background-color: white;
+}
+
+/* 展开状态 */
+.collapse-content.expanded {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* 展开时箭头旋转 */
+.collapse-arrow.expanded {
+    transform: rotate(90deg);
+}
+
+/* 掌握栏句子样式 */
+.mastered-item {
+    padding: 8px 15px;
+    margin: 0;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #ffffff;
+    font-size: 14px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.mastered-item:last-child {
+    border-bottom: none;
+}
+
+.mastered-item:hover {
+    background-color: #f9f9f9;
+}
+
+/* 易错栏句子样式 */
+.error-item {
+    padding: 8px;
+    margin-bottom: 5px;
+    background-color: #ffebee;
+    border-radius: 3px;
+    font-size: 14px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.error-item:hover {
+    background-color: #ffcdd2;
+}
+
+/* 错误统计样式 */
+.error-stats {
+    padding: 10px;
+    background-color: #fff3cd;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.error-stats h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #856404;
+}
+
+.error-stat-item {
+    padding: 5px;
+    margin-bottom: 3px;
+    background-color: white;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+/* 删除按钮通用样式 */
+.delete-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: transparent;
+    color: #dc3545;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    padding: 2px 6px;
+    line-height: 1;
+    margin: 0;
+}
+
+.mastered-item:hover .delete-btn,
+.error-item:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 2px;
+}
+
+.stats {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+}
+
+.stat-item {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.navigation {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.nav-btn {
+    background-color: #2196F3;
+}
+
+.nav-btn:hover {
+    background-color: #0b7dda;
+}

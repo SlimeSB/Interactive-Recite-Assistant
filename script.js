@@ -20,11 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadTextFile();
             
             // 绑定事件
-            document.getElementById('loadBtn').addEventListener('click', loadTextFile);
-            document.getElementById('generateBtn').addEventListener('click', generateClozeTest);
-            document.getElementById('prevBtn').addEventListener('click', showPreviousArticle);
-            document.getElementById('nextBtn').addEventListener('click', showNextArticle);
-            document.getElementById('clearErrorStatsBtn').addEventListener('click', clearErrorStats);
+            bindEventListeners();
         })
         .catch(error => {
             console.error('加载配置失败，使用默认配置:', error);
@@ -51,12 +47,55 @@ document.addEventListener('DOMContentLoaded', function() {
             loadTextFile();
             
             // 绑定事件
-            document.getElementById('loadBtn').addEventListener('click', loadTextFile);
-            document.getElementById('generateBtn').addEventListener('click', generateClozeTest);
-            document.getElementById('prevBtn').addEventListener('click', showPreviousArticle);
-            document.getElementById('nextBtn').addEventListener('click', showNextArticle);
+            bindEventListeners();
         });
 });
+
+// 绑定事件监听器
+function bindEventListeners() {
+    document.getElementById('loadBtn').addEventListener('click', loadTextFile);
+    document.getElementById('generateBtn').addEventListener('click', generateClozeTest);
+    document.getElementById('prevBtn').addEventListener('click', showPreviousArticle);
+    document.getElementById('nextBtn').addEventListener('click', showNextArticle);
+    document.getElementById('clearErrorStatsBtn').addEventListener('click', clearErrorStats);
+}
+
+// 获取文章的所有短句
+function getAllArticleSentences(article, parts) {
+    const sentences = [];
+    for (let i = 0; i < parts.length; i += 2) {
+        if (parts[i] && parts[i].trim()) {
+            const sentence = article.lineNumber + parts[i] + (parts[i + 1] || '');
+            sentences.push(sentence);
+        }
+    }
+    return sentences;
+}
+
+// 获取所有有效的位置（可挖空的位置）
+function getAllValidPositions(parts) {
+    const positions = [];
+    for (let i = 0; i < parts.length; i += 2) {
+        if (parts[i] && parts[i].trim()) {
+            positions.push(i);
+        }
+    }
+    return positions;
+}
+
+// 生成随机位置
+function generateRandomPositions(availablePositions, count) {
+    const positions = [...availablePositions];
+    const result = [];
+    
+    while (result.length < count && positions.length > 0) {
+        const randomIndex = Math.floor(Math.random() * positions.length);
+        result.push(positions[randomIndex]);
+        positions.splice(randomIndex, 1);
+    }
+    
+    return result;
+}
 
 // 加载配置文件
 async function loadConfig() {
@@ -171,13 +210,7 @@ function generateArticleCloze(articleIndex) {
     const parts = article.content.split(/([，。；！？：])/).filter(Boolean);
     
     // 获取当前文章的所有短句
-    const allArticleSentences = [];
-    for (let i = 0; i < parts.length; i += 2) {
-        if (parts[i] && parts[i].trim()) {
-            const sentence = article.lineNumber + parts[i] + (parts[i + 1] || '');
-            allArticleSentences.push(sentence);
-        }
-    }
+    const allArticleSentences = getAllArticleSentences(article, parts);
     
     // 检查是否所有短句都已掌握
     const allMastered = allArticleSentences.every(sentence => masteredSentences.has(sentence));
@@ -214,18 +247,10 @@ function generateArticleCloze(articleIndex) {
         clozeCount = reviewConfig.reviewClozeCount;
         
         // 随机选择挖空位置（从所有位置中选择）
-        const allPositions = [];
-        for (let i = 0; i < parts.length; i += 2) {
-            if (parts[i] && parts[i].trim()) {
-                allPositions.push(i);
-            }
-        }
+        const allPositions = getAllValidPositions(parts);
         
-        while (clozePositions.length < clozeCount && allPositions.length > 0) {
-            const randomIndex = Math.floor(Math.random() * allPositions.length);
-            clozePositions.push(allPositions[randomIndex]);
-            allPositions.splice(randomIndex, 1);
-        }
+        // 生成随机挖空位置
+        clozePositions = generateRandomPositions(allPositions, clozeCount);
     } else {
         // 正常模式
         // 计算当前篇的词条数量
@@ -247,31 +272,19 @@ function generateArticleCloze(articleIndex) {
             );
         }
         
-        // 随机选择挖空位置
-        while (clozePositions.length < clozeCount && availablePositions.length > 0) {
-            const randomIndex = Math.floor(Math.random() * availablePositions.length);
-            clozePositions.push(availablePositions[randomIndex]);
-            availablePositions.splice(randomIndex, 1);
-        }
+        // 生成随机挖空位置
+        clozePositions = generateRandomPositions(availablePositions, clozeCount);
         
         // 如果没有足够的可挖空位置，从所有位置中补充
         if (clozePositions.length < clozeCount) {
-            const allPositions = [];
-            for (let i = 0; i < parts.length; i += 2) {
-                if (parts[i] && parts[i].trim()) {
-                    allPositions.push(i);
-                }
-            }
+            const allPositions = getAllValidPositions(parts);
             
             // 过滤掉已选位置
             const remainingPositions = allPositions.filter(pos => !clozePositions.includes(pos));
             
             // 补充选择
-            while (clozePositions.length < clozeCount && remainingPositions.length > 0) {
-                const randomIndex = Math.floor(Math.random() * remainingPositions.length);
-                clozePositions.push(remainingPositions[randomIndex]);
-                remainingPositions.splice(randomIndex, 1);
-            }
+            const additionalPositions = generateRandomPositions(remainingPositions, clozeCount - clozePositions.length);
+            clozePositions = [...clozePositions, ...additionalPositions];
         }
     }
     
@@ -287,13 +300,7 @@ function displayArticleWithCloze(article, parts, clozePositions) {
     const textSection = document.getElementById('textSection');
     
     // 检查当前文章是否所有短句都已掌握
-    const allArticleSentences = [];
-    for (let i = 0; i < parts.length; i += 2) {
-        if (parts[i] && parts[i].trim()) {
-            const sentence = article.lineNumber + parts[i] + (parts[i + 1] || '');
-            allArticleSentences.push(sentence);
-        }
-    }
+    const allArticleSentences = getAllArticleSentences(article, parts);
     
     const allMastered = allArticleSentences.every(sentence => masteredSentences.has(sentence));
     
@@ -380,12 +387,8 @@ function showAnswer(event) {
     // 更新错误统计显示
     displayErrorStats();
     
-    // 锁定输入框
-    input.disabled = true;
-    
-    // 保存进度
-    saveProgress();
-    updateStats();
+    // 处理输入完成
+    handleInputCompletion(input);
 }
 
 // 检查答案
@@ -426,11 +429,8 @@ function checkAnswer(event) {
             }
         }
         
-        // 锁定输入框
-        input.disabled = true;
-        
-        saveProgress();
-        updateStats();
+        // 处理输入完成
+        handleInputCompletion(input);
     } else {
         // 错误
         input.classList.add('incorrect');
@@ -457,12 +457,19 @@ function checkAnswer(event) {
         // 更新错误统计显示
         displayErrorStats();
         
-        // 锁定输入框
-        input.disabled = true;
-        
-        saveProgress();
-        updateStats();
+        // 处理输入完成
+        handleInputCompletion(input);
     }
+}
+
+// 处理输入完成
+function handleInputCompletion(input) {
+    // 锁定输入框
+    input.disabled = true;
+    
+    // 保存进度
+    saveProgress();
+    updateStats();
 }
 
 // 按文章分组掌握的句子
