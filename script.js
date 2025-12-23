@@ -201,6 +201,24 @@ function generateClozeTest() {
     generateArticleCloze(currentArticleIndex);
 }
 
+// 生成全文默写
+function generateFullRecite(articleIndex) {
+    const article = allArticles[articleIndex];
+    if (!article) return;
+    
+    // 将文章内容按标点符号分割
+    const parts = article.content.split(/([，。；！？：])/).filter(Boolean);
+    
+    // 获取所有有效的位置（所有短句都挖空）
+    const allPositions = getAllValidPositions(parts);
+    
+    // 保存当前挖空位置
+    currentClozePositions = allPositions;
+    
+    // 生成带挖空的文章HTML
+    displayArticleWithCloze(article, parts, allPositions);
+}
+
 // 生成单篇文章的填空题
 function generateArticleCloze(articleIndex) {
     const article = allArticles[articleIndex];
@@ -275,17 +293,6 @@ function generateArticleCloze(articleIndex) {
         // 生成随机挖空位置
         clozePositions = generateRandomPositions(availablePositions, clozeCount);
         
-        // 如果没有足够的可挖空位置，从所有位置中补充
-        if (clozePositions.length < clozeCount) {
-            const allPositions = getAllValidPositions(parts);
-            
-            // 过滤掉已选位置
-            const remainingPositions = allPositions.filter(pos => !clozePositions.includes(pos));
-            
-            // 补充选择
-            const additionalPositions = generateRandomPositions(remainingPositions, clozeCount - clozePositions.length);
-            clozePositions = [...clozePositions, ...additionalPositions];
-        }
     }
     
     // 保存当前挖空位置
@@ -308,6 +315,7 @@ function displayArticleWithCloze(article, parts, clozePositions) {
     let articleInfo = `${article.lineNumber}篇`;
     if (allMastered) {
         articleInfo += ` <span style="color: #4CAF50; font-weight: bold;">(已全部背诵)</span>`;
+        articleInfo += ` <button type="button" id="fullReciteBtn" class="full-recite-btn">全文默写</button>`;
     }
     
     let html = `<div class="article-info">${articleInfo}</div>`;
@@ -349,6 +357,14 @@ function displayArticleWithCloze(article, parts, clozePositions) {
     document.querySelectorAll('.show-answer-btn').forEach(btn => {
         btn.addEventListener('click', showAnswer);
     });
+    
+    // 绑定全文默写按钮事件
+    const fullReciteBtn = document.getElementById('fullReciteBtn');
+    if (fullReciteBtn) {
+        fullReciteBtn.addEventListener('click', () => {
+            generateFullRecite(currentArticleIndex);
+        });
+    }
 }
 
 // 显示答案功能
@@ -373,6 +389,13 @@ function showAnswer(event) {
     
     // 隐藏"显"按钮
     btn.style.display = 'none';
+    
+    // 如果句子在已掌握集合中，移除它
+    if (masteredSentences.has(sentence)) {
+        masteredSentences.delete(sentence);
+        // 重新渲染掌握栏
+        renderMasteredSentences();
+    }
     
     // 添加到易错栏
     if (!errorSentences.has(sentence)) {
@@ -442,6 +465,13 @@ function checkAnswer(event) {
         const showBtn = document.getElementById(input.id.replace('cloze', 'show'));
         if (showBtn) {
             showBtn.style.display = 'none';
+        }
+        
+        // 如果句子在已掌握集合中，移除它
+        if (masteredSentences.has(sentence)) {
+            masteredSentences.delete(sentence);
+            // 重新渲染掌握栏
+            renderMasteredSentences();
         }
         
         // 添加到易错栏

@@ -262,7 +262,7 @@ button:disabled {
 
 /* 折叠内容 */
 .collapse-content {
-    max-height: 500px;
+    max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
     background-color: white;
@@ -386,5 +386,22 @@ button:disabled {
 }
 
 .nav-btn:hover {
+    background-color: #0b7dda;
+}
+
+/* 全文默写按钮 */
+.full-recite-btn {
+    padding: 5px 10px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 10px;
+}
+
+.full-recite-btn:hover {
     background-color: #0b7dda;
 }
