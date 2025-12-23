@@ -1,0 +1,16 @@
+{
+    "questionFile": "背诵.txt",
+    "clozeConfig": {
+        "minCount": 1,
+        "smallArticleRatio": 0.3,
+        "largeArticleMin": 3,
+        "largeArticleMax": 5,
+        "smallArticleThreshold": 10
+    },
+    "reviewConfig": {
+        "reviewClozeCount": 1
+    },
+    "uiConfig": {
+        "errorSectionDefaultCollapsed": true
+    }
+}
