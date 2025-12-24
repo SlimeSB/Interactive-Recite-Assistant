@@ -390,6 +390,9 @@ function showAnswer(event) {
     const input = document.getElementById(inputId);
     const feedbackElement = document.getElementById(feedbackId);
     
+    // 先禁用输入框，防止blur事件触发checkAnswer函数
+    input.disabled = true;
+    
     // 显示正确答案
     input.value = originalText;
     
@@ -422,7 +425,7 @@ function showAnswer(event) {
     // 更新错误统计显示
     displayErrorStats();
     
-    // 处理输入完成
+    // 处理输入完成（这里会再次禁用输入框，但不会有影响）
     handleInputCompletion(input);
 }
 
@@ -443,7 +446,7 @@ function checkAnswer(event) {
         // 正确
         input.classList.add('correct');
         input.classList.remove('incorrect');
-        feedbackElement.textContent = `✓`;
+        feedbackElement.textContent = `✅`;
         feedbackElement.className = 'answer-feedback correct';
         
         // 隐藏"显"按钮
@@ -538,6 +541,22 @@ function handleKeyDown(event) {
             inputs[index].focus();
         }
         event.preventDefault();
+    }
+    
+    // 0键执行当前输入框的"显"按钮功能
+    else if (key === '0' && event.target.classList.contains('cloze-input')) {
+        event.preventDefault();
+        
+        const input = event.target;
+        const inputId = input.id;
+        // 找到对应的显答案按钮
+        const btnId = inputId.replace('cloze', 'show');
+        const showBtn = document.getElementById(btnId);
+        
+        if (showBtn) {
+            // 触发显答案按钮的点击事件
+            showBtn.click();
+        }
     }
     
     // Tab键在输入框间循环切换
