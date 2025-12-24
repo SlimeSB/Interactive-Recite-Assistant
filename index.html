@@ -25,6 +25,18 @@
                 <button id="clearSequenceProgressBtn" class="clear-sequence-btn" disabled>清除顺序进度</button>
             </div>
             
+            <!-- 嵌入的文本输入框 -->
+            <div id="textInputModal" class="text-input-modal" style="display: none; margin: 20px 0; padding: 15px; background-color: #f0f0f0; border-radius: 8px;">
+                <h3>请输入背诵文章</h3>
+                <div style="margin-bottom: 15px;">
+                    <textarea id="articleTextarea" rows="10" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; font-family: 'Microsoft YaHei', sans-serif; font-size: 16px;"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button id="cancelBtn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>
+                    <button id="saveBtn" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">保存</button>
+                </div>
+            </div>
+            
             <div class="navigation">
                 <button id="prevBtn" class="nav-btn" disabled>上一篇</button>
                 <span id="articleNavInfo">第 0 篇 / 共 0 篇</span>
@@ -34,12 +46,75 @@
             <div id="textSection" class="text-section">
                 <div class="article-info" id="articleInfo">请先加载题库并生成题目</div>
             </div>
+            
+            <!-- 快捷键提示 -->
+            <div class="keyboard-shortcuts" style="margin-top: 30px; padding: 15px; background-color: #f5f5f5; border-radius: 8px;">
+                <h3 style="margin-top: 0; font-size: 16px; color: #333;">快捷键提示</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 14px;">
+                    <div><strong>1-9</strong>: 切换输入框</div>
+                    <div><strong>Tab</strong>: 循环切换输入框</div>
+                    <div><strong>空格</strong>: 刷新题目</div>
+                    <div><strong>+</strong>: 下一篇</div>
+                    <div><strong>-</strong>: 上一篇</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右上角齿轮图标 -->
+        <button id="configBtn" class="config-btn" style="position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; font-size: 20px; background-color: #f0f0f0; border: 1px solid #ddd; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+            ⚙️
+        </button>
+        
+        <!-- 配置面板 -->
+        <div id="configModal" class="config-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px;">
+                <h2 style="margin-top: 0; text-align: center;">配置设置</h2>
+                <div style="margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 16px;">挖空配置</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px;">最小挖空数：</label>
+                            <input type="number" id="configMinCount" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px;">小文章比例：</label>
+                            <input type="number" id="configSmallArticleRatio" step="0.1" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px;">大文章最小：</label>
+                            <input type="number" id="configLargeArticleMin" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px;">大文章最大：</label>
+                            <input type="number" id="configLargeArticleMax" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px;">小文章阈值：</label>
+                            <input type="number" id="configSmallArticleThreshold" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 16px;">复习配置</h3>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px;">复习挖空数：</label>
+                        <input type="number" id="configReviewClozeCount" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button id="cancelConfigBtn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>
+                    <button id="saveConfigBtn" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">保存</button>
+                </div>
+            </div>
         </div>
         
         <div class="sidebar">
             <!-- 掌握栏 -->
             <div class="section">
-                <h2>掌握栏</h2>
+                <h2 style="display: flex; justify-content: space-between; align-items: center;">
+                    掌握栏
+                    <button id="clearAllProgressBtn" style="font-size: 12px; padding: 3px 8px; margin: 0; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">清除进度</button>
+                </h2>
                 <div id="masteredSentencesList" class="sentence-list"></div>
             </div>
             

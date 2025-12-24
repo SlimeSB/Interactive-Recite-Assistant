@@ -15,44 +15,16 @@ let sequenceStartIndex = 0; // 顺序模式从第几句开始
 // 初始化
 document.addEventListener('DOMContentLoaded', function () {
     // 加载配置
-    loadConfig()
-        .then(() => {
-            // 从本地存储加载学习进度
-            loadProgress();
+    loadConfig();
+    
+    // 从本地存储加载学习进度
+    loadProgress();
 
-            // 自动加载题库
-            loadTextFile();
+    // 自动加载题库
+    loadTextFile();
 
-            // 绑定事件
-            bindEventListeners();
-        })
-        .catch(error => {
-            console.error('加载配置失败，使用默认配置:', error);
-            // 使用默认配置
-            config = {
-                "questionFile": "背诵.txt",
-                "clozeConfig": {
-                    "minCount": 1,
-                    "smallArticleRatio": 0.3,
-                    "largeArticleMin": 3,
-                    "largeArticleMax": 5,
-                    "smallArticleThreshold": 10
-                },
-                "reviewConfig": {
-                    "reviewClozeCount": 1
-                },
-                "uiConfig": {
-                    "errorSectionDefaultCollapsed": true
-                }
-            };
-
-            // 继续初始化
-            loadProgress();
-            loadTextFile();
-
-            // 绑定事件
-            bindEventListeners();
-        });
+    // 绑定事件
+    bindEventListeners();
 });
 
 // 绑定事件监听器
@@ -68,6 +40,18 @@ function bindEventListeners() {
     
     // 清除顺序进度按钮事件
     document.getElementById('clearSequenceProgressBtn').addEventListener('click', clearSequenceProgress);
+    
+    // 清除所有学习进度按钮事件
+    document.getElementById('clearAllProgressBtn').addEventListener('click', clearAllProgress);
+    
+    // 文本输入框事件
+    document.getElementById('saveBtn').addEventListener('click', saveArticle);
+    document.getElementById('cancelBtn').addEventListener('click', cancelArticle);
+    
+    // 配置相关事件
+    document.getElementById('configBtn').addEventListener('click', showConfigModal);
+    document.getElementById('saveConfigBtn').addEventListener('click', saveConfig);
+    document.getElementById('cancelConfigBtn').addEventListener('click', hideConfigModal);
 }
 
 // 获取文章的所有短句
@@ -107,13 +91,34 @@ function generateRandomPositions(availablePositions, count) {
     return result;
 }
 
-// 加载配置文件
-async function loadConfig() {
-    const response = await fetch('config.json');
-    if (!response.ok) {
-        throw new Error('配置文件加载失败');
+// 加载配置（从localStorage）
+function loadConfig() {
+    // 从localStorage读取配置
+    const savedConfig = localStorage.getItem('recitationConfig');
+    
+    if (savedConfig) {
+        // 使用保存的配置
+        config = JSON.parse(savedConfig);
+    } else {
+        // 使用默认配置
+        config = {
+            "clozeConfig": {
+                "minCount": 1,
+                "smallArticleRatio": 0.3,
+                "largeArticleMin": 3,
+                "largeArticleMax": 5,
+                "smallArticleThreshold": 10
+            },
+            "reviewConfig": {
+                "reviewClozeCount": 1
+            },
+            "uiConfig": {
+                "errorSectionDefaultCollapsed": true
+            }
+        };
+        // 保存默认配置到localStorage
+        localStorage.setItem('recitationConfig', JSON.stringify(config));
     }
-    config = await response.json();
 }
 
 // 可折叠section切换函数
@@ -145,29 +150,52 @@ function loadTextFile() {
     // 从localStorage读取保存的文章
     const savedText = localStorage.getItem('recitationText');
     
-    // 如果有保存的文章，询问是否使用，否则弹出输入框
+    // 如果有保存的文章，直接使用，否则显示输入框
     if (savedText) {
-        if (confirm('是否使用已保存的文章？点击取消将重新输入')) {
-            processText(savedText);
-            updateStats();
-            document.getElementById('generateBtn').disabled = false;
-            // 自动生成新题目
-            generateClozeTest();
-            return;
-        }
+        processText(savedText);
+        updateStats();
+        document.getElementById('generateBtn').disabled = false;
+        // 自动生成新题目
+        generateClozeTest();
+    } else {
+        // 显示嵌入的文本输入框
+        document.getElementById('textInputModal').style.display = 'block';
     }
+}
+
+// 保存文章
+function saveArticle() {
+    const textarea = document.getElementById('articleTextarea');
+    const text = textarea.value.trim();
     
-    // 弹出输入框，让用户输入文章
-    const text = prompt('请输入背诵文章内容：');
     if (text) {
         // 保存到localStorage
         localStorage.setItem('recitationText', text);
+        
+        // 隐藏文本输入框
+        document.getElementById('textInputModal').style.display = 'none';
+        
+        // 清空文本框
+        textarea.value = '';
+        
+        // 处理文本并生成题目
         processText(text);
         updateStats();
         document.getElementById('generateBtn').disabled = false;
         // 自动生成新题目
         generateClozeTest();
+    } else {
+        alert('请输入背诵文章内容');
     }
+}
+
+// 取消输入
+function cancelArticle() {
+    // 隐藏文本输入框
+    document.getElementById('textInputModal').style.display = 'none';
+    
+    // 清空文本框
+    document.getElementById('articleTextarea').value = '';
 }
 
 // 处理文本
@@ -231,6 +259,85 @@ function toggleMode() {
 function clearSequenceProgress() {
     sequenceStartIndex = 0;
     saveProgress();
+    generateClozeTest();
+}
+
+// 清除所有学习进度
+function clearAllProgress() {
+    // 显示二次确认提示
+    if (confirm('确定要清除所有学习进度吗？此操作不可恢复。')) {
+        // 清空所有学习进度数据
+        masteredSentences.clear();
+        errorSentences.clear();
+        errorCounts.clear();
+        sequenceStartIndex = 0;
+        
+        // 清除本地存储中的文章和进度
+        localStorage.removeItem('recitationText');
+        localStorage.removeItem('recitationProgress');
+        
+        // 重新加载题库
+        loadTextFile();
+        
+        // 更新UI
+        renderMasteredSentences();
+        updateStats();
+        
+        // 清空易错栏
+        const errorSentencesList = document.getElementById('errorSentencesList');
+        errorSentencesList.innerHTML = '<div style="padding: 10px; color: #666; text-align: center;">暂无易错短句</div>';
+        displayErrorStats();
+    }
+}
+
+// 显示配置模态框
+function showConfigModal() {
+    // 填充当前配置到表单
+    document.getElementById('configMinCount').value = config.clozeConfig.minCount;
+    document.getElementById('configSmallArticleRatio').value = config.clozeConfig.smallArticleRatio;
+    document.getElementById('configLargeArticleMin').value = config.clozeConfig.largeArticleMin;
+    document.getElementById('configLargeArticleMax').value = config.clozeConfig.largeArticleMax;
+    document.getElementById('configSmallArticleThreshold').value = config.clozeConfig.smallArticleThreshold;
+    document.getElementById('configReviewClozeCount').value = config.reviewConfig.reviewClozeCount;
+    
+    // 显示模态框
+    document.getElementById('configModal').style.display = 'block';
+}
+
+// 隐藏配置模态框
+function hideConfigModal() {
+    document.getElementById('configModal').style.display = 'none';
+}
+
+// 保存配置
+function saveConfig() {
+    // 从表单获取配置值
+    const newConfig = {
+        "clozeConfig": {
+            "minCount": parseInt(document.getElementById('configMinCount').value),
+            "smallArticleRatio": parseFloat(document.getElementById('configSmallArticleRatio').value),
+            "largeArticleMin": parseInt(document.getElementById('configLargeArticleMin').value),
+            "largeArticleMax": parseInt(document.getElementById('configLargeArticleMax').value),
+            "smallArticleThreshold": parseInt(document.getElementById('configSmallArticleThreshold').value)
+        },
+        "reviewConfig": {
+            "reviewClozeCount": parseInt(document.getElementById('configReviewClozeCount').value)
+        },
+        "uiConfig": {
+            "errorSectionDefaultCollapsed": config.uiConfig?.errorSectionDefaultCollapsed || true
+        }
+    };
+    
+    // 保存到localStorage
+    localStorage.setItem('recitationConfig', JSON.stringify(newConfig));
+    
+    // 更新当前配置
+    config = newConfig;
+    
+    // 隐藏模态框
+    hideConfigModal();
+    
+    // 重新生成题目
     generateClozeTest();
 }
 
