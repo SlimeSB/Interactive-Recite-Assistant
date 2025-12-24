@@ -549,28 +549,43 @@ function handleKeyDown(event) {
         if (event.target.classList.contains('cloze-input')) {
             const input = event.target;
 
-            // 获取所有未完成的输入框（未禁用的）
-            const updatedInputs = document.querySelectorAll('.cloze-input');
-            const activeInputs = Array.from(updatedInputs).filter(input => !input.disabled);
-
-            // 如果还有未完成的输入框
-
-            const currentIndex = Array.from(updatedInputs).indexOf(input);
-
-            // 如果是最后一个输入框，直接失焦
-            if (currentIndex === activeInputs.length - 1) {
-                event.preventDefault();
-                // 让当前输入框失焦
-                input.blur();
+            // 获取所有输入框
+            const allInputs = document.querySelectorAll('.cloze-input');
+            
+            event.preventDefault();
+            
+            // 查找下一个可用输入框
+            let nextIndex = Array.from(allInputs).indexOf(input) + 1;
+            
+            // 检查下一个输入框是否存在且未禁用
+            while (nextIndex < allInputs.length && allInputs[nextIndex].disabled) {
+                nextIndex++;
             }
-            // 否则执行自定义切换逻辑
+            
+            // 如果找到下一个可用输入框，切换到它
+            if (nextIndex < allInputs.length) {
+                allInputs[nextIndex].focus();
+            } 
+            // 否则从头搜索有没有空余的输入框
             else {
-                event.preventDefault();
-                const nextIndex = currentIndex + 1;
-                updatedInputs[nextIndex].focus();
+                // 查找第一个未禁用的输入框
+                let firstActiveIndex = -1;
+                for (let i = 0; i < allInputs.length; i++) {
+                    if (!allInputs[i].disabled) {
+                        firstActiveIndex = i;
+                        break;
+                    }
+                }
+                
+                // 如果找到且不是当前输入框，切换到它
+                if (firstActiveIndex >= 0 && firstActiveIndex !== Array.from(allInputs).indexOf(input)) {
+                    allInputs[firstActiveIndex].focus();
+                } 
+                // 否则，只有自身，失去焦点
+                else {
+                    input.blur();
+                }
             }
-
-            // 否则恢复默认Tab功能，允许用户按Tab完成输入
         }
     }
 
