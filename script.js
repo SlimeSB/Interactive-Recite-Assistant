@@ -371,6 +371,12 @@ function displayArticleWithCloze(article, parts, clozePositions) {
     
     // 检查所有输入框是否已完成
     checkAllInputsCompleted();
+    
+    // 自动聚焦到第一个输入框
+    const firstInput = document.querySelector('.cloze-input');
+    if (firstInput) {
+        firstInput.focus();
+    }
 }
 
 // 显示答案功能
@@ -538,11 +544,29 @@ function handleKeyDown(event) {
     else if (key === 'Tab') {
         // 检查是否在输入框上
         if (event.target.classList.contains('cloze-input')) {
-            event.preventDefault();
+            const input = event.target;
             
-            const currentIndex = Array.from(inputs).indexOf(event.target);
-            const nextIndex = (currentIndex + 1) % inputs.length;
-            inputs[nextIndex].focus();
+            // 如果当前输入框有内容且未禁用，先检查答案
+            if (input.value.trim() !== '' && !input.disabled) {
+                // 调用checkAnswer函数检查答案
+                const event = new Event('blur');
+                input.dispatchEvent(event);
+            }
+            
+            // 重新获取所有输入框（因为checkAnswer可能已经禁用了某些输入框）
+            const updatedInputs = document.querySelectorAll('.cloze-input');
+            // 获取所有未完成的输入框（未禁用的）
+            const activeInputs = Array.from(updatedInputs).filter(input => !input.disabled);
+            
+            // 如果还有未完成的输入框，才执行自定义切换逻辑
+            if (activeInputs.length > 0) {
+                event.preventDefault();
+                
+                const currentIndex = Array.from(updatedInputs).indexOf(input);
+                const nextIndex = (currentIndex + 1) % updatedInputs.length;
+                updatedInputs[nextIndex].focus();
+            }
+            // 否则恢复默认Tab功能，允许用户按Tab完成输入
         }
     }
     
@@ -550,6 +574,18 @@ function handleKeyDown(event) {
     else if (key === ' ' && areAllInputsCompleted()) {
         event.preventDefault();
         generateClozeTest();
+    }
+    
+    // +键进入下一篇
+    else if (key === '+') {
+        event.preventDefault();
+        showNextArticle();
+    }
+    
+    // -键进入上一篇
+    else if (key === '-') {
+        event.preventDefault();
+        showPreviousArticle();
     }
 }
 
