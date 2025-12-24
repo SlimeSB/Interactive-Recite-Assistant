@@ -9,16 +9,16 @@ let currentClozePositions = []; // 当前文章的挖空位置
 let config = null; // 配置对象
 
 // 初始化
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // 加载配置
     loadConfig()
         .then(() => {
             // 从本地存储加载学习进度
             loadProgress();
-            
+
             // 自动加载题库
             loadTextFile();
-            
+
             // 绑定事件
             bindEventListeners();
         })
@@ -41,11 +41,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     "errorSectionDefaultCollapsed": true
                 }
             };
-            
+
             // 继续初始化
             loadProgress();
             loadTextFile();
-            
+
             // 绑定事件
             bindEventListeners();
         });
@@ -87,13 +87,13 @@ function getAllValidPositions(parts) {
 function generateRandomPositions(availablePositions, count) {
     const positions = [...availablePositions];
     const result = [];
-    
+
     while (result.length < count && positions.length > 0) {
         const randomIndex = Math.floor(Math.random() * positions.length);
         result.push(positions[randomIndex]);
         positions.splice(randomIndex, 1);
     }
-    
+
     return result;
 }
 
@@ -110,7 +110,7 @@ async function loadConfig() {
 function toggleSection(sectionId) {
     const section = document.getElementById(sectionId);
     const toggleIcon = document.getElementById(sectionId + 'Toggle');
-    
+
     if (section.classList.contains('collapsed')) {
         section.classList.remove('collapsed');
         toggleIcon.textContent = '▼';
@@ -125,7 +125,7 @@ function toggleCollapse(headerElement) {
     const container = headerElement.parentElement;
     const content = container.querySelector('.collapse-content');
     const arrow = container.querySelector('.collapse-arrow');
-    
+
     content.classList.toggle('expanded');
     arrow.classList.toggle('expanded');
 }
@@ -157,17 +157,17 @@ function loadTextFile() {
 function processText(text) {
     // 按行分割，去除空行
     const lines = text.split('\n').filter(line => line.trim() !== '');
-    
+
     // 存储所有文章
     allArticles = [];
     allSentences = [];
-    
+
     lines.forEach((line, index) => {
         // 解析行号和内容
         const lineNumberMatch = line.match(/^(\d+→)/);
         const lineNumber = lineNumberMatch?.[1] || `${index + 1}→`;
         const content = line.replace(/^\d+→/, '');
-        
+
         // 保存完整文章
         allArticles.push({
             id: index + 1,
@@ -175,7 +175,7 @@ function processText(text) {
             content: content,
             fullText: line
         });
-        
+
         // 将文章拆分为短句，用于统计
         const sentences = content.split(/([，。；！？：])/).filter(Boolean);
         for (let i = 0; i < sentences.length; i += 2) {
@@ -185,7 +185,7 @@ function processText(text) {
             }
         }
     });
-    
+
     // 更新导航信息
     updateNavigation();
 }
@@ -196,7 +196,7 @@ function generateClozeTest() {
         alert('请先加载题库！');
         return;
     }
-    
+
     // 生成当前文章的填空题
     generateArticleCloze(currentArticleIndex);
 }
@@ -205,16 +205,16 @@ function generateClozeTest() {
 function generateFullRecite(articleIndex) {
     const article = allArticles[articleIndex];
     if (!article) return;
-    
+
     // 将文章内容按标点符号分割
     const parts = article.content.split(/([，。；！？：])/).filter(Boolean);
-    
+
     // 获取所有有效的位置（所有短句都挖空）
     const allPositions = getAllValidPositions(parts);
-    
+
     // 保存当前挖空位置
     currentClozePositions = allPositions;
-    
+
     // 生成带挖空的文章HTML
     displayArticleWithCloze(article, parts, allPositions);
 }
@@ -223,16 +223,16 @@ function generateFullRecite(articleIndex) {
 function generateArticleCloze(articleIndex) {
     const article = allArticles[articleIndex];
     if (!article) return;
-    
+
     // 将文章内容按标点符号分割
     const parts = article.content.split(/([，。；！？：])/).filter(Boolean);
-    
+
     // 获取当前文章的所有短句
     const allArticleSentences = getAllArticleSentences(article, parts);
-    
+
     // 检查是否所有短句都已掌握
     const allMastered = allArticleSentences.every(sentence => masteredSentences.has(sentence));
-    
+
     // 过滤掉已掌握的短句
     const availablePositions = [];
     for (let i = 0; i < parts.length; i += 2) {
@@ -243,10 +243,10 @@ function generateArticleCloze(articleIndex) {
             }
         }
     }
-    
+
     let clozeCount;
     let clozePositions = [];
-    
+
     // 从配置中获取挖空相关参数
     const clozeConfig = config?.clozeConfig || {
         minCount: 1,
@@ -255,25 +255,25 @@ function generateArticleCloze(articleIndex) {
         largeArticleMax: 5,
         smallArticleThreshold: 10
     };
-    
+
     const reviewConfig = config?.reviewConfig || {
         reviewClozeCount: 1
     };
-    
+
     if (allMastered) {
         // 所有短句都已掌握，进入复习模式
         clozeCount = reviewConfig.reviewClozeCount;
-        
+
         // 随机选择挖空位置（从所有位置中选择）
         const allPositions = getAllValidPositions(parts);
-        
+
         // 生成随机挖空位置
         clozePositions = generateRandomPositions(allPositions, clozeCount);
     } else {
         // 正常模式
         // 计算当前篇的词条数量
         const sentenceCount = allArticleSentences.length;
-        
+
         // 根据词条数量确定挖空数量
         if (sentenceCount < clozeConfig.smallArticleThreshold) {
             // 小文章，按比例挖空
@@ -289,15 +289,15 @@ function generateArticleCloze(articleIndex) {
                 clozeConfig.largeArticleMax
             );
         }
-        
+
         // 生成随机挖空位置
         clozePositions = generateRandomPositions(availablePositions, clozeCount);
-        
+
     }
-    
+
     // 保存当前挖空位置
     currentClozePositions = clozePositions;
-    
+
     // 生成带挖空的文章HTML
     displayArticleWithCloze(article, parts, clozePositions);
 }
@@ -305,21 +305,21 @@ function generateArticleCloze(articleIndex) {
 // 显示带挖空的文章
 function displayArticleWithCloze(article, parts, clozePositions) {
     const textSection = document.getElementById('textSection');
-    
+
     // 检查当前文章是否所有短句都已掌握
     const allArticleSentences = getAllArticleSentences(article, parts);
-    
+
     const allMastered = allArticleSentences.every(sentence => masteredSentences.has(sentence));
-    
+
     // 添加文章标题，包括已全部背诵标记
     let articleInfo = `${article.lineNumber}篇`;
     if (allMastered) {
         articleInfo += ` <span style="color: #4CAF50; font-weight: bold;">(已全部背诵)</span>`;
         articleInfo += ` <button type="button" id="fullReciteBtn" class="full-recite-btn">全文默写</button>`;
     }
-    
+
     let html = `<div class="article-info">${articleInfo}</div>`;
-    
+
     parts.forEach((part, i) => {
         if (clozePositions.includes(i) && part.trim()) {
             // 挖空部分
@@ -328,7 +328,7 @@ function displayArticleWithCloze(article, parts, clozePositions) {
             const inputId = `cloze-${currentArticleIndex}-${i}`;
             const feedbackId = `feedback-${currentArticleIndex}-${i}`;
             const btnId = `show-${currentArticleIndex}-${i}`;
-            
+
             html += `
                 <div class="input-group">
                     <input type="text" id="${inputId}" class="cloze-input" placeholder="请输入..." 
@@ -345,19 +345,19 @@ function displayArticleWithCloze(article, parts, clozePositions) {
             html += part;
         }
     });
-    
+
     textSection.innerHTML = html;
-    
+
     // 绑定输入事件
     document.querySelectorAll('.cloze-input').forEach(input => {
         input.addEventListener('blur', checkAnswer);
     });
-    
+
     // 绑定显示答案按钮事件
     document.querySelectorAll('.show-answer-btn').forEach(btn => {
         btn.addEventListener('click', showAnswer);
     });
-    
+
     // 绑定全文默写按钮事件
     const fullReciteBtn = document.getElementById('fullReciteBtn');
     if (fullReciteBtn) {
@@ -365,13 +365,13 @@ function displayArticleWithCloze(article, parts, clozePositions) {
             generateFullRecite(currentArticleIndex);
         });
     }
-    
+
     // 添加键盘事件监听器
     addKeyboardEventListeners();
-    
+
     // 检查所有输入框是否已完成
     checkAllInputsCompleted();
-    
+
     // 自动聚焦到第一个输入框
     const firstInput = document.querySelector('.cloze-input');
     if (firstInput) {
@@ -386,45 +386,45 @@ function showAnswer(event) {
     const originalText = btn.dataset.original;
     const sentence = btn.dataset.sentence;
     const feedbackId = btn.dataset.feedback;
-    
+
     const input = document.getElementById(inputId);
     const feedbackElement = document.getElementById(feedbackId);
-    
+
     // 先禁用输入框，防止blur事件触发checkAnswer函数
     input.disabled = true;
-    
+
     // 显示正确答案
     input.value = originalText;
-    
+
     // 标记为错误
     input.classList.add('incorrect');
     input.classList.remove('correct');
     feedbackElement.textContent = `❌`;
     feedbackElement.className = 'answer-feedback incorrect';
-    
+
     // 隐藏"显"按钮
     btn.style.display = 'none';
-    
+
     // 如果句子在已掌握集合中，移除它
     if (masteredSentences.has(sentence)) {
         masteredSentences.delete(sentence);
         // 重新渲染掌握栏
         renderMasteredSentences();
     }
-    
+
     // 添加到易错栏
     if (!errorSentences.has(sentence)) {
         errorSentences.add(sentence);
         addToErrorSentences(sentence);
     }
-    
+
     // 更新错误次数
     const currentError = errorCounts.get(sentence) || 0;
     errorCounts.set(sentence, currentError + 1);
-    
+
     // 更新错误统计显示
     displayErrorStats();
-    
+
     // 处理输入完成（这里会再次禁用输入框，但不会有影响）
     handleInputCompletion(input);
 }
@@ -436,25 +436,25 @@ function checkAnswer(event) {
     const userAnswer = input.value.trim();
     const feedbackElement = document.getElementById(input.id.replace('cloze', 'feedback'));
     const sentence = input.dataset.sentence;
-    
+
     // 如果输入为空，不进行操作
     if (userAnswer === '') {
         return;
     }
-    
+
     if (userAnswer === originalText) {
         // 正确
         input.classList.add('correct');
         input.classList.remove('incorrect');
         feedbackElement.textContent = `✅`;
         feedbackElement.className = 'answer-feedback correct';
-        
+
         // 隐藏"显"按钮
         const showBtn = document.getElementById(input.id.replace('cloze', 'show'));
         if (showBtn) {
             showBtn.style.display = 'none';
         }
-        
+
         // 检查是否在易错栏
         if (errorSentences.has(sentence)) {
             // 如果在易错栏，只从易错栏移除
@@ -466,7 +466,7 @@ function checkAnswer(event) {
                 addToMasteredSentences(sentence);
             }
         }
-        
+
         // 处理输入完成
         handleInputCompletion(input);
     } else {
@@ -475,33 +475,33 @@ function checkAnswer(event) {
         input.classList.remove('correct');
         feedbackElement.textContent = `❌ ${originalText}`;
         feedbackElement.className = 'answer-feedback incorrect';
-        
+
         // 隐藏"显"按钮
         const showBtn = document.getElementById(input.id.replace('cloze', 'show'));
         if (showBtn) {
             showBtn.style.display = 'none';
         }
-        
+
         // 如果句子在已掌握集合中，移除它
         if (masteredSentences.has(sentence)) {
             masteredSentences.delete(sentence);
             // 重新渲染掌握栏
             renderMasteredSentences();
         }
-        
+
         // 添加到易错栏
         if (!errorSentences.has(sentence)) {
             errorSentences.add(sentence);
             addToErrorSentences(sentence);
         }
-        
+
         // 更新错误次数
         const currentError = errorCounts.get(sentence) || 0;
         errorCounts.set(sentence, currentError + 1);
-        
+
         // 更新错误统计显示
         displayErrorStats();
-        
+
         // 处理输入完成
         handleInputCompletion(input);
     }
@@ -511,11 +511,11 @@ function checkAnswer(event) {
 function handleInputCompletion(input) {
     // 锁定输入框
     input.disabled = true;
-    
+
     // 保存进度
     saveProgress();
     updateStats();
-    
+
     // 检查所有输入框是否已完成
     checkAllInputsCompleted();
 }
@@ -524,7 +524,7 @@ function handleInputCompletion(input) {
 function addKeyboardEventListeners() {
     // 移除之前的事件监听器，避免重复绑定
     document.removeEventListener('keydown', handleKeyDown);
-    
+
     // 添加新的事件监听器
     document.addEventListener('keydown', handleKeyDown);
 }
@@ -533,7 +533,7 @@ function addKeyboardEventListeners() {
 function handleKeyDown(event) {
     const key = event.key;
     const inputs = document.querySelectorAll('.cloze-input');
-    
+
     // 1-9数字键切换输入框
     if (key >= '1' && key <= '9') {
         const index = parseInt(key) - 1;
@@ -542,65 +542,50 @@ function handleKeyDown(event) {
         }
         event.preventDefault();
     }
-    
-    // 0键执行当前输入框的"显"按钮功能
-    else if (key === '0' && event.target.classList.contains('cloze-input')) {
-        event.preventDefault();
-        
-        const input = event.target;
-        const inputId = input.id;
-        // 找到对应的显答案按钮
-        const btnId = inputId.replace('cloze', 'show');
-        const showBtn = document.getElementById(btnId);
-        
-        if (showBtn) {
-            // 触发显答案按钮的点击事件
-            showBtn.click();
-        }
-    }
-    
+
     // Tab键在输入框间循环切换
     else if (key === 'Tab') {
         // 检查是否在输入框上
         if (event.target.classList.contains('cloze-input')) {
             const input = event.target;
-            
-            // 如果当前输入框有内容且未禁用，先检查答案
-            if (input.value.trim() !== '' && !input.disabled) {
-                // 调用checkAnswer函数检查答案
-                const event = new Event('blur');
-                input.dispatchEvent(event);
-            }
-            
-            // 重新获取所有输入框（因为checkAnswer可能已经禁用了某些输入框）
-            const updatedInputs = document.querySelectorAll('.cloze-input');
+
             // 获取所有未完成的输入框（未禁用的）
+            const updatedInputs = document.querySelectorAll('.cloze-input');
             const activeInputs = Array.from(updatedInputs).filter(input => !input.disabled);
-            
-            // 如果还有未完成的输入框，才执行自定义切换逻辑
-            if (activeInputs.length > 0) {
+
+            // 如果还有未完成的输入框
+
+            const currentIndex = Array.from(updatedInputs).indexOf(input);
+
+            // 如果是最后一个输入框，直接失焦
+            if (currentIndex === activeInputs.length - 1) {
                 event.preventDefault();
-                
-                const currentIndex = Array.from(updatedInputs).indexOf(input);
-                const nextIndex = (currentIndex + 1) % updatedInputs.length;
+                // 让当前输入框失焦
+                input.blur();
+            }
+            // 否则执行自定义切换逻辑
+            else {
+                event.preventDefault();
+                const nextIndex = currentIndex + 1;
                 updatedInputs[nextIndex].focus();
             }
+
             // 否则恢复默认Tab功能，允许用户按Tab完成输入
         }
     }
-    
+
     // 空格键刷新功能（仅当所有输入框都已完成时）
     else if (key === ' ' && areAllInputsCompleted()) {
         event.preventDefault();
         generateClozeTest();
     }
-    
+
     // +键进入下一篇
     else if (key === '+') {
         event.preventDefault();
         showNextArticle();
     }
-    
+
     // -键进入上一篇
     else if (key === '-') {
         event.preventDefault();
@@ -612,13 +597,13 @@ function handleKeyDown(event) {
 function checkAllInputsCompleted() {
     const inputs = document.querySelectorAll('.cloze-input');
     const allCompleted = areAllInputsCompleted();
-    
+
     // 移除之前的刷新提示
     const existingHint = document.getElementById('refreshHint');
     if (existingHint) {
         existingHint.remove();
     }
-    
+
     // 如果所有输入框都已完成，显示刷新提示
     if (allCompleted && inputs.length > 0) {
         const textSection = document.getElementById('textSection');
@@ -639,17 +624,17 @@ function areAllInputsCompleted() {
 // 按文章分组掌握的句子
 function groupSentencesByArticle(sentences) {
     const grouped = new Map();
-    
+
     sentences.forEach(sentence => {
         // 提取文章标识（行号前缀，如"1→"）
         const articleId = sentence.match(/^(\d+→)/)?.[1] || '其他';
-        
+
         if (!grouped.has(articleId)) {
             grouped.set(articleId, []);
         }
         grouped.get(articleId).push(sentence);
     });
-    
+
     return grouped;
 }
 
@@ -657,23 +642,23 @@ function groupSentencesByArticle(sentences) {
 function renderMasteredSentences() {
     const masteredDiv = document.getElementById('masteredSentencesList');
     masteredDiv.innerHTML = '';
-    
+
     if (masteredSentences.size === 0) {
         masteredDiv.innerHTML = '<div style="padding: 10px; color: #666; text-align: center;">暂无掌握的短句</div>';
         return;
     }
-    
+
     // 按文章分组
     const groupedSentences = groupSentencesByArticle(masteredSentences);
-    
+
     // 获取当前文章标识
     const currentArticle = allArticles[currentArticleIndex];
     const currentArticleId = currentArticle ? currentArticle.lineNumber : '';
-    
+
     // 分离当前篇和其他篇
     const otherArticles = [];
     let currentArticleGroup = null;
-    
+
     groupedSentences.forEach((sentences, articleId) => {
         if (articleId === currentArticleId) {
             currentArticleGroup = { articleId, sentences };
@@ -681,13 +666,13 @@ function renderMasteredSentences() {
             otherArticles.push({ articleId, sentences });
         }
     });
-    
+
     // 渲染顺序：当前篇（如果有）→ 其他篇按文章ID排序
     const renderOrder = [];
     if (currentArticleGroup) {
         renderOrder.push(currentArticleGroup);
     }
-    
+
     // 其他篇按文章ID排序
     otherArticles.sort((a, b) => {
         // 提取数字部分进行排序
@@ -695,57 +680,57 @@ function renderMasteredSentences() {
         const bNum = parseInt(b.articleId.match(/\d+/)?.[0] || '0');
         return aNum - bNum;
     });
-    
+
     renderOrder.push(...otherArticles);
-    
+
     // 渲染所有分组
     renderOrder.forEach(({ articleId, sentences }) => {
         const container = document.createElement('div');
         container.className = `collapse-container`;
-        
+
         // 创建头部
         const isCurrent = articleId === currentArticleId;
         const header = document.createElement('div');
         header.className = `collapse-header ${isCurrent ? 'current' : ''}`;
         header.onclick = () => toggleCollapse(header);
-        
+
         const headerText = document.createElement('span');
         headerText.textContent = `${articleId}篇 (${sentences.length}个短句)`;
-        
+
         const arrow = document.createElement('span');
         arrow.className = 'collapse-arrow';
         arrow.textContent = '▶';
-        
+
         header.appendChild(headerText);
         header.appendChild(arrow);
-        
+
         // 创建内容
         const content = document.createElement('div');
         content.className = 'collapse-content';
-        
+
         // 添加句子
         sentences.forEach(sentence => {
             const sentenceItem = document.createElement('div');
             sentenceItem.className = 'mastered-item';
-            
+
             // 创建删除按钮
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-btn';
             deleteBtn.textContent = '×';
             deleteBtn.title = '删除该短句';
-            
+
             // 添加删除事件
-            deleteBtn.addEventListener('click', function() {
+            deleteBtn.addEventListener('click', function () {
                 deleteMasteredSentence(sentence, sentenceItem);
             });
-            
+
             // 设置内容和按钮
             sentenceItem.textContent = sentence;
             sentenceItem.appendChild(deleteBtn);
-            
+
             content.appendChild(sentenceItem);
         });
-        
+
         // 组装容器
         container.appendChild(header);
         container.appendChild(content);
@@ -763,10 +748,10 @@ function addToMasteredSentences(sentence) {
 function deleteMasteredSentence(sentence, element) {
     // 从集合中删除
     masteredSentences.delete(sentence);
-    
+
     // 重新渲染整个掌握栏
     renderMasteredSentences();
-    
+
     saveProgress();
     updateStats();
 }
@@ -776,29 +761,29 @@ function addToErrorSentences(sentence) {
     const errorDiv = document.getElementById('errorSentencesList');
     const sentenceItem = document.createElement('div');
     sentenceItem.className = 'error-item';
-    
+
     // 创建删除按钮
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-btn';
     deleteBtn.textContent = '×';
     deleteBtn.title = '删除该短句';
-    
+
     // 添加删除事件
-    deleteBtn.addEventListener('click', function() {
+    deleteBtn.addEventListener('click', function () {
         deleteErrorSentence(sentence, sentenceItem);
     });
-    
+
     // 设置内容和按钮
     sentenceItem.textContent = sentence;
     sentenceItem.appendChild(deleteBtn);
-    
+
     errorDiv.appendChild(sentenceItem);
 }
 
 // 从易错栏移除
 function removeFromErrorSentences(sentence) {
     errorSentences.delete(sentence);
-    
+
     // 从DOM中删除
     const errorDiv = document.getElementById('errorSentencesList');
     const items = errorDiv.querySelectorAll('.error-item');
@@ -813,10 +798,10 @@ function removeFromErrorSentences(sentence) {
 function deleteErrorSentence(sentence, element) {
     // 从集合中删除
     errorSentences.delete(sentence);
-    
+
     // 从DOM中删除
     element.remove();
-    
+
     saveProgress();
     updateStats();
 }
@@ -825,11 +810,11 @@ function deleteErrorSentence(sentence, element) {
 function displayErrorStats() {
     const statsDiv = document.getElementById('errorStatsList');
     statsDiv.innerHTML = '';
-    
+
     // 按错误次数排序
     const sortedErrors = Array.from(errorCounts.entries())
         .sort((a, b) => b[1] - a[1]);
-    
+
     sortedErrors.forEach(([sentence, count]) => {
         const statItem = document.createElement('div');
         statItem.className = 'error-stat-item';
@@ -842,20 +827,20 @@ function displayErrorStats() {
 function clearErrorStats() {
     // 清空错误次数统计
     errorCounts.clear();
-    
+
     // 清空易错短句
     errorSentences.clear();
-    
+
     // 清空易错栏显示
     const errorSentencesList = document.getElementById('errorSentencesList');
     errorSentencesList.innerHTML = '<div style="padding: 10px; color: #666; text-align: center;">暂无易错短句</div>';
-    
+
     // 清空错误统计显示
     displayErrorStats();
-    
+
     // 保存进度
     saveProgress();
-    
+
     // 更新统计显示
     updateStats();
 }
@@ -866,7 +851,7 @@ function updateStats() {
     const total = allSentences.length;
     const mastered = masteredSentences.size;
     const percentage = total > 0 ? Math.round((mastered / total) * 100) : 0;
-    
+
     document.getElementById('totalArticles').textContent = totalArticles;
     document.getElementById('totalSentences').textContent = total;
     document.getElementById('masteredCount').textContent = mastered;
@@ -880,10 +865,10 @@ function updateNavigation() {
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const navInfo = document.getElementById('articleNavInfo');
-    
+
     const total = allArticles.length;
     const current = currentArticleIndex + 1;
-    
+
     navInfo.textContent = `第 ${current} 篇 / 共 ${total} 篇`;
     prevBtn.disabled = currentArticleIndex === 0;
     nextBtn.disabled = currentArticleIndex >= total - 1;
@@ -930,18 +915,18 @@ function loadProgress() {
         masteredSentences = new Set(progress.masteredSentences || []);
         errorSentences = new Set(progress.errorSentences || []);
         errorCounts = new Map(Object.entries(progress.errorCounts || {}));
-        
+
         // 渲染掌握栏
         renderMasteredSentences();
-        
+
         // 显示易错短句
         errorSentences.forEach(sentence => {
             addToErrorSentences(sentence);
         });
-        
+
         // 显示错误统计
         displayErrorStats();
-        
+
         // 更新统计
         updateStats();
     }
