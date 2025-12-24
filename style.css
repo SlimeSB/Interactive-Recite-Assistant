@@ -440,3 +440,44 @@ button:disabled {
 .full-recite-btn:hover {
     background-color: #0b7dda;
 }
+
+/* 响应式布局 - 竖屏设备 */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .main-content {
+        margin-bottom: 20px;
+    }
+    
+    .sidebar {
+        width: 100%;
+    }
+    
+    .cloze-input {
+        width: 150px;
+    }
+}
+
+/* 更小屏幕的适配 */
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .main-content,
+    .sidebar {
+        padding: 15px;
+    }
+    
+    .cloze-input {
+        width: 120px;
+    }
+    
+    .controls button {
+        margin: 5px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+}
