@@ -8,6 +8,10 @@ let currentArticleIndex = 0; // 当前文章索引
 let currentClozePositions = []; // 当前文章的挖空位置
 let config = null; // 配置对象
 
+// 顺序模式相关变量
+let isSequenceMode = false; // 是否为顺序模式
+let sequenceStartIndex = 0; // 顺序模式从第几句开始
+
 // 初始化
 document.addEventListener('DOMContentLoaded', function () {
     // 加载配置
@@ -58,6 +62,12 @@ function bindEventListeners() {
     document.getElementById('prevBtn').addEventListener('click', showPreviousArticle);
     document.getElementById('nextBtn').addEventListener('click', showNextArticle);
     document.getElementById('clearErrorStatsBtn').addEventListener('click', clearErrorStats);
+    
+    // 模式切换按钮事件
+    document.getElementById('modeToggleBtn').addEventListener('click', toggleMode);
+    
+    // 清除顺序进度按钮事件
+    document.getElementById('clearSequenceProgressBtn').addEventListener('click', clearSequenceProgress);
 }
 
 // 获取文章的所有短句
@@ -132,25 +142,32 @@ function toggleCollapse(headerElement) {
 
 // 加载文本文件
 function loadTextFile() {
-    const questionFile = config?.questionFile || '背诵.txt';
-    fetch(questionFile)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('文件加载失败');
-            }
-            return response.text();
-        })
-        .then(text => {
-            processText(text);
+    // 从localStorage读取保存的文章
+    const savedText = localStorage.getItem('recitationText');
+    
+    // 如果有保存的文章，询问是否使用，否则弹出输入框
+    if (savedText) {
+        if (confirm('是否使用已保存的文章？点击取消将重新输入')) {
+            processText(savedText);
             updateStats();
             document.getElementById('generateBtn').disabled = false;
             // 自动生成新题目
             generateClozeTest();
-        })
-        .catch(error => {
-            console.error('加载文件时出错:', error);
-            alert('加载文件失败，请检查文件是否存在。');
-        });
+            return;
+        }
+    }
+    
+    // 弹出输入框，让用户输入文章
+    const text = prompt('请输入背诵文章内容：');
+    if (text) {
+        // 保存到localStorage
+        localStorage.setItem('recitationText', text);
+        processText(text);
+        updateStats();
+        document.getElementById('generateBtn').disabled = false;
+        // 自动生成新题目
+        generateClozeTest();
+    }
 }
 
 // 处理文本
@@ -190,13 +207,40 @@ function processText(text) {
     updateNavigation();
 }
 
+// 切换顺序/乱序模式
+function toggleMode() {
+    isSequenceMode = !isSequenceMode;
+    const modeBtn = document.getElementById('modeToggleBtn');
+    const clearBtn = document.getElementById('clearSequenceProgressBtn');
+    
+    if (isSequenceMode) {
+        modeBtn.textContent = '乱序模式';
+        modeBtn.classList.add('active');
+        clearBtn.disabled = false;
+    } else {
+        modeBtn.textContent = '顺序模式';
+        modeBtn.classList.remove('active');
+        clearBtn.disabled = true;
+    }
+    
+    // 重新生成题目
+    generateClozeTest();
+}
+
+// 清除顺序模式进度
+function clearSequenceProgress() {
+    sequenceStartIndex = 0;
+    saveProgress();
+    generateClozeTest();
+}
+
 // 生成填空题
 function generateClozeTest() {
     if (allArticles.length === 0) {
         alert('请先加载题库！');
         return;
     }
-
+    
     // 生成当前文章的填空题
     generateArticleCloze(currentArticleIndex);
 }
@@ -217,6 +261,51 @@ function generateFullRecite(articleIndex) {
 
     // 生成带挖空的文章HTML
     displayArticleWithCloze(article, parts, allPositions);
+}
+
+// 生成顺序模式的挖空位置
+function generateSequenceClozePositions(article, parts, availablePositions, clozeCount) {
+    const allPositions = getAllValidPositions(parts);
+    const clozePositions = [];
+    
+    // 从指定的起始位置开始
+    let startIndex = sequenceStartIndex;
+    
+    // 确保起始位置不超出范围
+    if (startIndex >= allPositions.length) {
+        startIndex = 0;
+        sequenceStartIndex = 0;
+    }
+    
+    // 找到第一个未掌握的位置，从起始位置开始
+    let currentIndex = startIndex;
+    while (currentIndex < allPositions.length) {
+        const position = allPositions[currentIndex];
+        const sentence = article.lineNumber + parts[position] + (parts[position + 1] || '');
+        
+        // 检查该位置是否未掌握
+        if (!masteredSentences.has(sentence)) {
+            clozePositions.push(position);
+            break;
+        }
+        
+        currentIndex++;
+    }
+    
+    // 如果找不到未掌握的位置，从头开始找
+    if (clozePositions.length === 0) {
+        for (let i = 0; i < allPositions.length; i++) {
+            const position = allPositions[i];
+            const sentence = article.lineNumber + parts[position] + (parts[position + 1] || '');
+            
+            if (!masteredSentences.has(sentence)) {
+                clozePositions.push(position);
+                break;
+            }
+        }
+    }
+    
+    return clozePositions;
 }
 
 // 生成单篇文章的填空题
@@ -290,8 +379,15 @@ function generateArticleCloze(articleIndex) {
             );
         }
 
-        // 生成随机挖空位置
-        clozePositions = generateRandomPositions(availablePositions, clozeCount);
+        // 根据模式生成挖空位置
+        if (isSequenceMode) {
+            // 顺序模式：只挖空1个，从头或首个未掌握开始
+            clozeCount = 1;
+            clozePositions = generateSequenceClozePositions(article, parts, availablePositions, clozeCount);
+        } else {
+            // 乱序模式：随机生成挖空位置
+            clozePositions = generateRandomPositions(availablePositions, clozeCount);
+        }
 
     }
 
@@ -460,13 +556,26 @@ function checkAnswer(event) {
             // 如果在易错栏，只从易错栏移除
             removeFromErrorSentences(sentence);
         } else {
-            // 如果不在易错栏，添加到掌握栏
-            if (!masteredSentences.has(sentence)) {
+            // 如果不在易错栏，且不是顺序模式，才添加到掌握栏
+            if (!isSequenceMode && !masteredSentences.has(sentence)) {
                 masteredSentences.add(sentence);
                 addToMasteredSentences(sentence);
             }
         }
 
+        // 如果是顺序模式，答对后更新起始索引
+        if (isSequenceMode) {
+            const allPositions = getAllValidPositions(allArticles[currentArticleIndex].content.split(/([，。；！？：])/).filter(Boolean));
+            const inputId = input.id;
+            const positionMatch = inputId.match(/\d+-([0-9]+)$/);
+            if (positionMatch) {
+                const currentPosition = parseInt(positionMatch[1]);
+                const currentIndex = allPositions.indexOf(currentPosition);
+                // 更新起始索引为当前位置的下一个
+                sequenceStartIndex = currentIndex + 1;
+            }
+        }
+        
         // 处理输入完成
         handleInputCompletion(input);
     } else {
@@ -505,19 +614,19 @@ function checkAnswer(event) {
         // 处理输入完成
         handleInputCompletion(input);
     }
+    
+    // 检查所有输入框是否已完成
+    checkAllInputsCompleted();
 }
 
 // 处理输入完成
 function handleInputCompletion(input) {
     // 锁定输入框
     input.disabled = true;
-
+    
     // 保存进度
     saveProgress();
     updateStats();
-
-    // 检查所有输入框是否已完成
-    checkAllInputsCompleted();
 }
 
 // 添加键盘事件监听器
@@ -917,6 +1026,7 @@ function saveProgress() {
         masteredSentences: Array.from(masteredSentences),
         errorSentences: Array.from(errorSentences),
         errorCounts: Object.fromEntries(errorCounts),
+        sequenceStartIndex: sequenceStartIndex,
         timestamp: Date.now()
     };
     localStorage.setItem('recitationProgress', JSON.stringify(progress));
@@ -930,18 +1040,21 @@ function loadProgress() {
         masteredSentences = new Set(progress.masteredSentences || []);
         errorSentences = new Set(progress.errorSentences || []);
         errorCounts = new Map(Object.entries(progress.errorCounts || {}));
-
+        
+        // 加载顺序模式进度
+        sequenceStartIndex = progress.sequenceStartIndex || 0;
+        
         // 渲染掌握栏
         renderMasteredSentences();
-
+        
         // 显示易错短句
         errorSentences.forEach(sentence => {
             addToErrorSentences(sentence);
         });
-
+        
         // 显示错误统计
         displayErrorStats();
-
+        
         // 更新统计
         updateStats();
     }

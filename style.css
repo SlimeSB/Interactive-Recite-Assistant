@@ -389,6 +389,41 @@ button:disabled {
     background-color: #0b7dda;
 }
 
+/* 模式切换按钮 */
+.mode-toggle-btn {
+    background-color: #2196F3;
+    margin-left: 5px;
+}
+
+.mode-toggle-btn:hover {
+    background-color: #0b7dda;
+}
+
+.mode-toggle-btn.active {
+    background-color: #4CAF50;
+}
+
+.mode-toggle-btn.active:hover {
+    background-color: #45a049;
+}
+
+/* 清除顺序进度按钮 */
+.clear-sequence-btn {
+    background-color: #f44336;
+    margin-left: 5px;
+    font-size: 14px;
+    padding: 10px 15px;
+}
+
+.clear-sequence-btn:hover {
+    background-color: #d32f2f;
+}
+
+.clear-sequence-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
 /* 全文默写按钮 */
 .full-recite-btn {
     padding: 5px 10px;
