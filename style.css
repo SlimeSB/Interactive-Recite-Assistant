@@ -1,3 +1,27 @@
+:root {
+    --primary-green: #4CAF50;
+    --primary-green-hover: #45a049;
+    --error-red: #f44336;
+    --error-red-hover: #d32f2f;
+    --error-red-dark: #b71c1c;
+    --nav-blue: #2196F3;
+    --nav-blue-hover: #0b7dda;
+    --cancel-gray: #6c757d;
+    --disabled-gray: #cccccc;
+    --progress-bg: #e0e0e0;
+    --page-bg: #f5f5f5;
+    --card-bg: #ffffff;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-heading: #555555;
+    --section-bg: #f0f0f0;
+    --input-border: #dddddd;
+    --light-green: #e8f5e8;
+    --light-red: #ffebee;
+    --light-blue: #e3f2fd;
+    --delete-red: #dc3545;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -6,7 +30,7 @@
 
 body {
     font-family: 'Microsoft YaHei', sans-serif;
-    background-color: #f5f5f5;
+    background-color: var(--page-bg);
     line-height: 1.6;
 }
 
@@ -36,12 +60,12 @@ body {
 
 h1 {
     text-align: center;
-    color: #333;
+    color: var(--text-primary);
     margin-bottom: 20px;
 }
 
 h2 {
-    color: #555;
+    color: var(--text-heading);
     margin-bottom: 15px;
     font-size: 18px;
 }
@@ -53,7 +77,7 @@ h2 {
 .progress-bar {
     width: 100%;
     height: 20px;
-    background-color: #e0e0e0;
+    background-color: var(--progress-bg);
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 10px;
@@ -61,14 +85,14 @@ h2 {
 
 .progress-fill {
     height: 100%;
-    background-color: #4CAF50;
+    background-color: var(--primary-green);
     width: 0%;
     transition: width 0.3s ease;
 }
 
 .progress-text {
     text-align: center;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 14px;
 }
 
@@ -83,7 +107,7 @@ h2 {
 .article-info {
     margin-bottom: 20px;
     padding: 10px;
-    background-color: #e8f5e8;
+    background-color: var(--light-green);
     border-radius: 5px;
     font-weight: bold;
 }
@@ -107,7 +131,7 @@ h2 {
 /* 显示答案按钮 */
 .show-answer-btn {
     padding: 8px 12px;
-    background-color: #f44336;
+    background-color: var(--error-red);
     color: white;
     border: none;
     border-radius: 4px;
@@ -118,26 +142,26 @@ h2 {
 }
 
 .show-answer-btn:hover {
-    background-color: #d32f2f;
+    background-color: var(--error-red-hover);
 }
 
 .show-answer-btn:active {
-    background-color: #b71c1c;
+    background-color: var(--error-red-dark);
 }
 
 .cloze-input:focus {
     outline: none;
-    border-color: #4CAF50;
+    border-color: var(--primary-green);
 }
 
 .cloze-input.correct {
-    border-color: #4CAF50;
-    background-color: #e8f5e8;
+    border-color: var(--primary-green);
+    background-color: var(--light-green);
 }
 
 .cloze-input.incorrect {
-    border-color: #f44336;
-    background-color: #ffebee;
+    border-color: var(--error-red);
+    background-color: var(--light-red);
 }
 
 .answer-feedback {
@@ -146,11 +170,11 @@ h2 {
 }
 
 .answer-feedback.correct {
-    color: #4CAF50;
+    color: var(--primary-green);
 }
 
 .answer-feedback.incorrect {
-    color: #f44336;
+    color: var(--error-red);
 }
 
 .controls {
@@ -161,7 +185,7 @@ h2 {
 button {
     padding: 10px 20px;
     font-size: 16px;
-    background-color: #4CAF50;
+    background-color: var(--primary-green);
     color: white;
     border: none;
     border-radius: 4px;
@@ -171,11 +195,11 @@ button {
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: var(--primary-green-hover);
 }
 
 button:disabled {
-    background-color: #cccccc;
+    background-color: var(--disabled-gray);
     cursor: not-allowed;
 }
 
@@ -183,7 +207,7 @@ button:disabled {
 .section {
     margin-bottom: 20px;
     padding: 15px;
-    background-color: #f0f0f0;
+    background-color: var(--section-bg);
     border-radius: 8px;
 }
 
@@ -235,7 +259,7 @@ button:disabled {
 /* 折叠列表头部 */
 .collapse-header {
     padding: 10px;
-    background-color: #f5f5f5;
+    background-color: var(--page-bg);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
@@ -250,8 +274,8 @@ button:disabled {
 
 /* 折叠列表头部 - 当前篇样式 */
 .collapse-header.current {
-    background-color: #e3f2fd;
-    border-left: 4px solid #2196F3;
+    background-color: var(--light-blue);
+    border-left: 4px solid var(--nav-blue);
 }
 
 /* 折叠箭头 */
@@ -302,7 +326,7 @@ button:disabled {
 .error-item {
     padding: 8px;
     margin-bottom: 5px;
-    background-color: #ffebee;
+    background-color: var(--light-red);
     border-radius: 3px;
     font-size: 14px;
     position: relative;
@@ -342,7 +366,7 @@ button:disabled {
     top: 50%;
     transform: translateY(-50%);
     background-color: transparent;
-    color: #dc3545;
+    color: var(--delete-red);
     border: none;
     font-size: 16px;
     cursor: pointer;
@@ -359,7 +383,7 @@ button:disabled {
 }
 
 .delete-btn:hover {
-    background-color: #dc3545;
+    background-color: var(--delete-red);
     color: white;
     border-radius: 2px;
 }
@@ -367,7 +391,7 @@ button:disabled {
 .stats {
     margin-top: 20px;
     padding: 15px;
-    background-color: #f0f0f0;
+    background-color: var(--section-bg);
     border-radius: 5px;
 }
 
@@ -382,52 +406,52 @@ button:disabled {
 }
 
 .nav-btn {
-    background-color: #2196F3;
+    background-color: var(--nav-blue);
 }
 
 .nav-btn:hover {
-    background-color: #0b7dda;
+    background-color: var(--nav-blue-hover);
 }
 
 /* 模式切换按钮 */
 .mode-toggle-btn {
-    background-color: #2196F3;
+    background-color: var(--nav-blue);
     margin-left: 5px;
 }
 
 .mode-toggle-btn:hover {
-    background-color: #0b7dda;
+    background-color: var(--nav-blue-hover);
 }
 
 .mode-toggle-btn.active {
-    background-color: #4CAF50;
+    background-color: var(--primary-green);
 }
 
 .mode-toggle-btn.active:hover {
-    background-color: #45a049;
+    background-color: var(--primary-green-hover);
 }
 
 /* 清除顺序进度按钮 */
 .clear-sequence-btn {
-    background-color: #f44336;
+    background-color: var(--error-red);
     margin-left: 5px;
     font-size: 14px;
     padding: 10px 15px;
 }
 
 .clear-sequence-btn:hover {
-    background-color: #d32f2f;
+    background-color: var(--error-red-hover);
 }
 
 .clear-sequence-btn:disabled {
-    background-color: #cccccc;
+    background-color: var(--disabled-gray);
     cursor: not-allowed;
 }
 
 /* 全文默写按钮 */
 .full-recite-btn {
     padding: 5px 10px;
-    background-color: #2196F3;
+    background-color: var(--nav-blue);
     color: white;
     border: none;
     border-radius: 4px;
@@ -438,7 +462,25 @@ button:disabled {
 }
 
 .full-recite-btn:hover {
-    background-color: #0b7dda;
+    background-color: var(--nav-blue-hover);
+}
+
+.export-btn {
+    background-color: #ff9800;
+    font-size: 14px;
+}
+
+.export-btn:hover {
+    background-color: #f57c00;
+}
+
+.import-btn {
+    background-color: #9c27b0;
+    font-size: 14px;
+}
+
+.import-btn:hover {
+    background-color: #7b1fa2;
 }
 
 /* 响应式布局 - 竖屏设备 */

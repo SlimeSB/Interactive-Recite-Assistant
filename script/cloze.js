@@ -7,6 +7,7 @@ import {
   getArticles,
   getMode,
   getSequenceIndex,
+  isMastered,
 } from './state.js';
 
 function generateRandomPositions(availablePositions, count) {
@@ -22,7 +23,8 @@ function generateRandomPositions(availablePositions, count) {
   return result;
 }
 
-export function generateSequenceClozePositions(article, parts, mastered, sequenceStartIndex) {
+export function generateSequenceClozePositions(article, parts, sequenceStartIndex) {
+  const state = getState();
   const allPositions = getAllValidPositions(parts);
   const clozePositions = [];
 
@@ -35,7 +37,7 @@ export function generateSequenceClozePositions(article, parts, mastered, sequenc
   while (currentIdx < allPositions.length) {
     const position = allPositions[currentIdx];
     const sentence = article.lineNumber + parts[position] + (parts[position + 1] || '');
-    if (!mastered.has(sentence)) {
+    if (!isMastered(sentence)) {
       clozePositions.push(position);
       break;
     }
@@ -46,7 +48,7 @@ export function generateSequenceClozePositions(article, parts, mastered, sequenc
     for (let i = 0; i < allPositions.length; i++) {
       const position = allPositions[i];
       const sentence = article.lineNumber + parts[position] + (parts[position + 1] || '');
-      if (!mastered.has(sentence)) {
+      if (!isMastered(sentence)) {
         clozePositions.push(position);
         break;
       }
@@ -64,13 +66,13 @@ export function generateArticleCloze(articleIndex) {
 
   const parts = article.content.split(/([，。；！？：])/).filter(Boolean);
   const allArticleSentences = getAllArticleSentences(article, parts);
-  const allMastered = allArticleSentences.every(s => state.mastered.has(s));
+  const allMastered = allArticleSentences.every(s => isMastered(s));
 
   const availablePositions = [];
   for (let i = 0; i < parts.length; i += 2) {
     if (parts[i] && parts[i].trim()) {
       const sentence = article.lineNumber + parts[i] + (parts[i + 1] || '');
-      if (!state.mastered.has(sentence)) {
+      if (!isMastered(sentence)) {
         availablePositions.push(i);
       }
     }
@@ -112,7 +114,7 @@ export function generateArticleCloze(articleIndex) {
 
     if (getMode() === 'sequence') {
       clozeCount = 1;
-      const result = generateSequenceClozePositions(article, parts, state.mastered, getSequenceIndex());
+      const result = generateSequenceClozePositions(article, parts, getSequenceIndex());
       clozePositions = result.clozePositions;
       newSequenceIndex = result.nextStartIndex;
     } else {

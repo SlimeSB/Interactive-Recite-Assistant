@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="manifest.json">
     <title>背诵软件</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -23,6 +25,9 @@
                 <button id="generateBtn" disabled>刷新</button>
                 <button id="modeToggleBtn" class="mode-toggle-btn">顺序模式</button>
                 <button id="clearSequenceProgressBtn" class="clear-sequence-btn" disabled>清除顺序进度</button>
+                <button id="exportBtn" class="export-btn">导出</button>
+                <button id="importBtn" class="import-btn">导入</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
             </div>
             
             <!-- 嵌入的文本输入框 -->

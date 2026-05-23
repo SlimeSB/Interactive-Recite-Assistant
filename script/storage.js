@@ -41,8 +41,22 @@ export function loadProgress() {
     const data = JSON.parse(raw);
     if (!data || typeof data !== 'object') throw new Error('Invalid progress data');
 
+    let mastered;
+    if (data.masteredSentences) {
+      if (Array.isArray(data.masteredSentences)) {
+        mastered = {};
+        data.masteredSentences.forEach(s => { mastered[s] = 1; });
+      } else if (typeof data.masteredSentences === 'object') {
+        mastered = data.masteredSentences;
+      } else {
+        mastered = {};
+      }
+    } else {
+      mastered = {};
+    }
+
     return {
-      mastered: Array.isArray(data.masteredSentences) ? data.masteredSentences : [],
+      mastered,
       errors: Array.isArray(data.errorSentences) ? data.errorSentences : [],
       errorCounts: data.errorCounts && typeof data.errorCounts === 'object' ? data.errorCounts : {},
       sequenceIndex: typeof data.sequenceStartIndex === 'number' ? data.sequenceStartIndex : 0,
@@ -57,7 +71,7 @@ export function loadProgress() {
 export function saveProgress(mastered, errors, errorCounts, sequenceIndex) {
   try {
     const data = {
-      masteredSentences: Array.from(mastered),
+      masteredSentences: Object.fromEntries(mastered),
       errorSentences: Array.from(errors),
       errorCounts: Object.fromEntries(errorCounts),
       sequenceStartIndex: sequenceIndex,

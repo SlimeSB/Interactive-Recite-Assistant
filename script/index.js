@@ -3,14 +3,12 @@ import {
   setArticles,
   setSequenceIndex,
   setConfig,
-  addMastered,
   addError,
   setErrorCounts,
 } from './state.js';
 import {
   loadText,
   loadProgress,
-  saveProgress,
 } from './storage.js';
 import { loadConfig } from './config.js';
 import { processText } from './parser.js';
@@ -34,7 +32,9 @@ function init() {
 
   const progress = loadProgress();
   if (progress) {
-    progress.mastered.forEach(s => addMastered(s));
+    Object.entries(progress.mastered).forEach(([sentence, interval]) => {
+      getState().mastered.set(sentence, interval);
+    });
     progress.errors.forEach(s => addError(s));
     setErrorCounts(new Map(Object.entries(progress.errorCounts)));
     setSequenceIndex(progress.sequenceIndex);
@@ -66,3 +66,7 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}

@@ -2,7 +2,6 @@ import {
   getState,
   getArticles,
   getCurrentIndex,
-  getMastered,
   getErrors,
   getErrorCounts,
   getMode,
@@ -12,8 +11,8 @@ import {
   setSequenceIndex,
   setArticles,
   setConfig,
-  addMastered,
-  removeMastered,
+  markCorrect,
+  markIncorrect,
   addError,
   removeError,
   incrementErrorCount,
@@ -73,10 +72,10 @@ function checkAnswer(event) {
 
     if (state.errors.has(sentence)) {
       removeError(sentence);
-    } else {
-      if (getMode() !== 'sequence' && !state.mastered.has(sentence)) {
-        addMastered(sentence);
-      }
+    }
+
+    if (getMode() !== 'sequence') {
+      markCorrect(sentence);
     }
 
     if (getMode() === 'sequence') {
@@ -104,9 +103,7 @@ function checkAnswer(event) {
     const showBtn = document.getElementById(input.id.replace('cloze', 'show'));
     if (showBtn) showBtn.style.display = 'none';
 
-    if (state.mastered.has(sentence)) {
-      removeMastered(sentence);
-    }
+    markIncorrect(sentence);
 
     addError(sentence);
     incrementErrorCount(sentence);
@@ -137,11 +134,9 @@ function showAnswer(event) {
   feedbackElement.className = 'answer-feedback incorrect';
   btn.style.display = 'none';
 
-  const state = getState();
-  if (state.mastered.has(sentence)) {
-    removeMastered(sentence);
-  }
+  markIncorrect(sentence);
 
+  const state = getState();
   if (!state.errors.has(sentence)) {
     addError(sentence);
   }
@@ -206,6 +201,11 @@ export function bindButtonEvents() {
   document.getElementById('errorSectionHeader').addEventListener('click', () => {
     toggleSection('errorSection');
   });
+  document.getElementById('exportBtn').addEventListener('click', exportData);
+  document.getElementById('importBtn').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', importData);
 }
 
 function loadTextFile() {
@@ -330,6 +330,93 @@ function saveConfigHandler() {
   setConfig(newConfig);
   hideConfigModal();
   generateClozeTest();
+}
+
+function exportData() {
+  const state = getState();
+  const text = loadSavedText();
+  const data = {
+    version: 1,
+    timestamp: Date.now(),
+    text: text || '',
+    progress: {
+      masteredSentences: Object.fromEntries(state.mastered),
+      errorSentences: Array.from(state.errors),
+      errorCounts: Object.fromEntries(state.errorCounts),
+      sequenceStartIndex: state.sequenceIndex,
+    },
+    config: state.config,
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `recite-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('导出成功', 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || !data.text) {
+        toast('无效的备份文件', 'error');
+        return;
+      }
+
+      if (data.text) {
+        saveTextToStorage(data.text);
+      }
+
+      if (data.progress) {
+        const progress = {
+          mastered: data.progress.masteredSentences || {},
+          errors: data.progress.errorSentences || [],
+          errorCounts: data.progress.errorCounts || {},
+          sequenceIndex: data.progress.sequenceStartIndex || 0,
+        };
+
+        clearAllProgress();
+        const s = getState();
+        Object.entries(progress.mastered).forEach(([sentence, interval]) => {
+          s.mastered.set(sentence, interval);
+        });
+        progress.errors.forEach(s => addError(s));
+        const ecMap = new Map(Object.entries(progress.errorCounts));
+        s.errorCounts = ecMap;
+        setSequenceIndex(progress.sequenceIndex);
+      }
+
+      if (data.config) {
+        saveConfigToStorage(data.config);
+        setConfig(data.config);
+      }
+
+      const text = loadSavedText();
+      if (text) {
+        const { articles, sentences } = processText(text);
+        setArticles(articles, sentences);
+        enableGenerateBtn();
+      }
+
+      generateClozeTest();
+      renderAllPanels();
+      renderModeToggle();
+      toast('导入成功', 'success');
+    } catch (err) {
+      console.error('Import failed:', err);
+      toast('导入失败，文件格式不正确', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 export function bindKeyboardEvents() {

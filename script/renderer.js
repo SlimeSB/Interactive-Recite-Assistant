@@ -8,6 +8,10 @@ import {
   getSentences,
   removeMastered,
   removeError,
+  isMastered,
+  getMasteredCount,
+  getMasteredSentences,
+  getMasteredInterval,
 } from './state.js';
 import { saveProgress } from './storage.js';
 
@@ -32,7 +36,7 @@ export function renderNavigation() {
 export function renderStats() {
   const totalArticles = getArticles().length;
   const total = getSentences().length;
-  const mastered = getMastered().size;
+  const mastered = getMasteredCount();
   const percentage = total > 0 ? Math.round((mastered / total) * 100) : 0;
 
   document.getElementById('totalArticles').textContent = totalArticles;
@@ -50,7 +54,7 @@ export function renderClozeSection(result) {
 
   let info = `<div class="article-info">${article.lineNumber}篇`;
   if (allMastered) {
-    info += ' <span style="color: #4CAF50; font-weight: bold;">(已全部背诵)</span>';
+    info += ' <span style="color: var(--primary-green); font-weight: bold;">(已全部背诵)</span>';
     info += ' <button type="button" id="fullReciteBtn" class="full-recite-btn">全文默写</button>';
   }
   info += '</div>';
@@ -76,7 +80,7 @@ export function renderClozeSection(result) {
           <span id="${feedbackId}" class="answer-feedback"></span>
         </div>`;
     } else {
-      html += part;
+      html += escapeHTML(part);
     }
   });
 
@@ -90,6 +94,10 @@ export function renderClozeSection(result) {
 
 function escapeAttr(str) {
   return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 export function checkAllInputsCompleted() {
@@ -177,8 +185,8 @@ export function renderMasteredSentences() {
   const masteredDiv = document.getElementById('masteredSentencesList');
   masteredDiv.innerHTML = '';
 
-  const mastered = getMastered();
-  if (mastered.size === 0) {
+  const mastered = getMasteredSentences();
+  if (getMasteredCount() === 0) {
     masteredDiv.innerHTML = '<div style="padding: 10px; color: #666; text-align: center;">暂无掌握的短句</div>';
     return;
   }
@@ -234,6 +242,11 @@ export function renderMasteredSentences() {
       const item = document.createElement('div');
       item.className = 'mastered-item';
 
+      const interval = getMasteredInterval(sentence);
+      const intervalSpan = document.createElement('span');
+      intervalSpan.style.cssText = 'font-size: 11px; color: #888; margin-left: 8px;';
+      intervalSpan.textContent = interval > 1 ? `[${interval}d]` : '';
+
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'delete-btn';
       deleteBtn.textContent = '×';
@@ -244,6 +257,7 @@ export function renderMasteredSentences() {
       });
 
       item.textContent = sentence;
+      item.appendChild(intervalSpan);
       item.appendChild(deleteBtn);
       content.appendChild(item);
     });

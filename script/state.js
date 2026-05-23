@@ -1,7 +1,7 @@
 const state = {
   articles: [],
   sentences: [],
-  mastered: new Set(),
+  mastered: new Map(),
   errors: new Set(),
   errorCounts: new Map(),
   currentIndex: 0,
@@ -71,8 +71,38 @@ export function setConfig(config) {
   notify();
 }
 
-export function addMastered(sentence) {
-  state.mastered.add(sentence);
+export function isMastered(sentence) {
+  const interval = state.mastered.get(sentence);
+  return interval !== undefined && interval > 0;
+}
+
+export function getMasteredCount() {
+  let count = 0;
+  state.mastered.forEach(v => { if (v > 0) count++; });
+  return count;
+}
+
+export function getMasteredSentences() {
+  const result = new Set();
+  state.mastered.forEach((interval, sentence) => {
+    if (interval > 0) result.add(sentence);
+  });
+  return result;
+}
+
+export function getMasteredInterval(sentence) {
+  return state.mastered.get(sentence) || 0;
+}
+
+export function markCorrect(sentence) {
+  const current = state.mastered.get(sentence) || 0;
+  const newInterval = current === 0 ? 1 : Math.min(current * 2, 64);
+  state.mastered.set(sentence, newInterval);
+  notify();
+}
+
+export function markIncorrect(sentence) {
+  state.mastered.set(sentence, 0);
   notify();
 }
 
